@@ -1,4 +1,4 @@
-import { BN, BigNum } from '@drift-labs/sdk';
+import { BN, BigNum } from '@velocity-exchange/sdk';
 
 const DEFAULT_MODIFIED_DIETZ_RESULT = {
 	apy: 0,

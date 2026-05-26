@@ -100,19 +100,6 @@ pub struct ShareTransferRecord {
     pub to_depositor_shares_after: u128,
 }
 
-#[event]
-pub struct FuelSeasonRecord {
-    pub ts: i64,
-    pub authority: Pubkey,
-    pub fuel_insurance: u128,
-    pub fuel_deposits: u128,
-    pub fuel_borrows: u128,
-    pub fuel_positions: u128,
-    pub fuel_taker: u128,
-    pub fuel_maker: u128,
-    pub fuel_total: u128,
-}
-
 #[derive(Clone, Copy, AnchorSerialize, AnchorDeserialize, PartialEq, Eq)]
 pub enum FeeUpdateAction {
     Pending,

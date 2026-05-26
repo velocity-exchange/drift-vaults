@@ -1,4 +1,4 @@
-import { BN, TEN } from '@drift-labs/sdk';
+import { BN, TEN } from '@velocity-exchange/sdk';
 import { PublicKey } from '@solana/web3.js';
 
 export const VAULT_SHARES_PRECISION_EXP = new BN(6);

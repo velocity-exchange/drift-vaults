@@ -4,7 +4,7 @@ import {
 	BulkAccountLoader,
 	PERCENTAGE_PRECISION,
 	ZERO,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { PublicKey } from '@solana/web3.js';
 import { DriftVaults } from '../types/drift_vaults';
 import { VaultDepositor, VaultDepositorAccountEvents } from '../types/types';

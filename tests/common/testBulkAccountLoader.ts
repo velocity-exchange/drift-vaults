@@ -1,4 +1,4 @@
-import { AccountToLoad, BulkAccountLoader } from '@drift-labs/sdk';
+import { AccountToLoad, BulkAccountLoader } from '@velocity-exchange/sdk';
 
 export class TestBulkAccountLoader extends BulkAccountLoader {
 	async loadChunk(accountsToLoadChunks: AccountToLoad[][]): Promise<void> {

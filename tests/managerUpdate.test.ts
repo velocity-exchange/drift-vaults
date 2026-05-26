@@ -20,7 +20,7 @@ import {
 	QUOTE_PRECISION,
 	TestClient,
 	ZERO,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { TestBulkAccountLoader } from './common/testBulkAccountLoader';
 import {
 	bootstrapSignerClientAndUserBankrun,

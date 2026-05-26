@@ -16,11 +16,8 @@ import {
 	SpotMarketAccount,
 	UserAccount,
 	UserStatsAccount,
-	FuelOverflowStatus,
-	getFuelOverflowAccountPublicKey,
-	FUEL_RESET_LOG_ACCOUNT,
 	QUOTE_PRECISION_EXP,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { BorshAccountsCoder, Program, ProgramAccount } from '@coral-xyz/anchor';
 import { DriftVaults } from './types/drift_vaults';
 import {
@@ -53,7 +50,6 @@ import {
 } from '@solana/spl-token';
 import {
 	FeeUpdate,
-	FuelDistributionMode,
 	hasPendingFeeUpdate,
 	Vault,
 	VaultClass,
@@ -65,7 +61,7 @@ import {
 	WithdrawUnit,
 } from './types/types';
 import { bs58 } from '@coral-xyz/anchor/dist/cjs/utils/bytes';
-import { UserMapConfig } from '@drift-labs/sdk';
+import { UserMapConfig } from '@velocity-exchange/sdk';
 import { calculateRealizedVaultDepositorEquity } from './math';
 import { Metaplex } from '@metaplex-foundation/js';
 import { getOrCreateATAInstruction } from './utils';
@@ -138,9 +134,9 @@ export class VaultClient {
 		userAccounts: UserAccount[],
 		writableSpotMarketIndexes: number[],
 		vaultAccount: Vault,
-		userStats: UserStatsAccount,
+		_userStats: UserStatsAccount,
 		skipVaultProtocol = false,
-		skipFuelOverflow = false,
+		_skipFuelOverflow = false,
 		skipFeeUpdate = false
 	) {
 		const remainingAccounts = this.driftClient.getRemainingAccounts({
@@ -149,9 +145,6 @@ export class VaultClient {
 		});
 
 		const hasVaultProtocol = vaultAccount.vaultProtocol === true;
-		const hasFuelOverflow =
-			(userStats.fuelOverflowStatus & FuelOverflowStatus.Exists) ===
-			FuelOverflowStatus.Exists;
 
 		const hasFeeUpdate = hasPendingFeeUpdate(vaultAccount.feeUpdateStatus);
 
@@ -164,18 +157,6 @@ export class VaultClient {
 				pubkey: feeUpdate,
 				isSigner: false,
 				isWritable: true,
-			});
-		}
-
-		if (hasFuelOverflow && !skipFuelOverflow) {
-			const fuelOverflow = getFuelOverflowAccountPublicKey(
-				this.driftClient.program.programId,
-				vaultAccount.pubkey
-			);
-			remainingAccounts.push({
-				pubkey: fuelOverflow,
-				isSigner: false,
-				isWritable: false,
 			});
 		}
 
@@ -3502,196 +3483,6 @@ export class VaultClient {
 			.accounts({
 				vault,
 				vaultProtocol: this.getVaultProtocolAddress(vault),
-			})
-			.instruction();
-	}
-
-	public async updateCumulativeFuelAmount(
-		params: {
-			vaultDepositorPubkey?: PublicKey;
-			vaultDepositorAccount?: VaultDepositor;
-			vaultPubkey?: PublicKey;
-			vaultAccount?: Vault;
-			vaultUserStats?: UserStatsAccount;
-		},
-		txParams?: TxParams
-	): Promise<TransactionSignature> {
-		return await this.createAndSendTxn(
-			[await this.getUpdateCumulativeFuelAmountIx(params)],
-			txParams
-		);
-	}
-
-	public async getUpdateCumulativeFuelAmountIx({
-		vaultDepositorPubkey,
-		vaultDepositorAccount,
-		vaultPubkey,
-		vaultAccount,
-		vaultUserStats,
-	}: {
-		vaultDepositorPubkey?: PublicKey;
-		vaultDepositorAccount?: VaultDepositor;
-		vaultPubkey?: PublicKey;
-		vaultAccount?: Vault;
-		vaultUserStats?: UserStatsAccount;
-	}): Promise<TransactionInstruction> {
-		if (!vaultDepositorPubkey && !vaultDepositorAccount) {
-			throw new Error(
-				'Must supply vaultDepositorPubkey or vaultDepositorAccount'
-			);
-		}
-		if (!vaultPubkey && !vaultAccount) {
-			throw new Error('Must supply vaultPubkey or vaultAccount');
-		}
-
-		if (!vaultDepositorAccount) {
-			vaultDepositorAccount = await this.program.account.vaultDepositor.fetch(
-				vaultDepositorPubkey!
-			);
-		}
-		if (!vaultAccount) {
-			vaultAccount = await this.program.account.vault.fetch(vaultPubkey!);
-		}
-
-		const user = await this.getSubscribedVaultUser(vaultAccount.user);
-		const userStatsKey = getUserStatsAccountPublicKey(
-			this.driftClient.program.programId,
-			vaultDepositorAccount.vault
-		);
-		let userStats = vaultUserStats;
-		if (!userStats) {
-			userStats = (await (
-				this.driftClient.program as any
-			).account.userStats.fetch(userStatsKey)) as UserStatsAccount;
-		}
-
-		const remainingAccounts = this.getRemainingAccountsForUser(
-			[user.getUserAccount()],
-			[],
-			vaultAccount,
-			userStats
-		);
-
-		return this.program.methods
-			.updateCumulativeFuelAmount()
-			.accounts({
-				vault: vaultDepositorAccount.vault,
-				vaultDepositor: vaultDepositorAccount.pubkey,
-				driftUserStats: userStatsKey,
-			})
-			.remainingAccounts(remainingAccounts)
-			.instruction();
-	}
-
-	public async resetFuelSeason(
-		vaultDepositor: PublicKey,
-		txParams?: TxParams
-	): Promise<TransactionSignature> {
-		return await this.createAndSendTxn(
-			[await this.getResetFuelSeasonIx(vaultDepositor)],
-			txParams
-		);
-	}
-
-	public async getResetFuelSeasonIx(
-		vaultDepositor: PublicKey
-	): Promise<TransactionInstruction> {
-		const state = this.driftClient.getStateAccount();
-		if (!state.admin.equals(this.driftClient.wallet.publicKey)) {
-			throw new Error(`Only the admin wallet can reset the fuel season.`);
-		}
-
-		const vaultDepositorAccount =
-			await this.program.account.vaultDepositor.fetch(vaultDepositor);
-		const vaultAccount = await this.program.account.vault.fetch(
-			vaultDepositorAccount.vault
-		);
-		const user = await this.getSubscribedVaultUser(vaultAccount.user);
-		const userStatsKey = getUserStatsAccountPublicKey(
-			this.driftClient.program.programId,
-			vaultDepositorAccount.vault
-		);
-		const userStats = (await (
-			this.driftClient.program as any
-		).account.userStats.fetch(userStatsKey)) as UserStatsAccount;
-		const remainingAccounts = this.getRemainingAccountsForUser(
-			[user.getUserAccount()],
-			[],
-			vaultAccount,
-			userStats
-		);
-
-		return this.program.methods
-			.resetFuelSeason()
-			.accounts({
-				vault: vaultDepositorAccount.vault,
-				vaultDepositor,
-				admin: this.driftClient.wallet.publicKey,
-				driftUserStats: userStatsKey,
-				driftState: await this.driftClient.getStatePublicKey(),
-				// @ts-ignore
-				logAccount: FUEL_RESET_LOG_ACCOUNT,
-			})
-			.remainingAccounts(remainingAccounts)
-			.instruction();
-	}
-
-	public async resetVaultFuelSeason(
-		vault: PublicKey,
-		txParams?: TxParams
-	): Promise<TransactionSignature> {
-		return await this.createAndSendTxn(
-			[await this.getResetVaultFuelSeasonIx(vault)],
-			txParams
-		);
-	}
-
-	public async getResetVaultFuelSeasonIx(
-		vault: PublicKey
-	): Promise<TransactionInstruction> {
-		const state = this.driftClient.getStateAccount();
-		if (!state.admin.equals(this.driftClient.wallet.publicKey)) {
-			throw new Error(`Only the admin wallet can reset the fuel season.`);
-		}
-
-		return this.program.methods
-			.resetVaultFuelSeason()
-			.accounts({
-				vault,
-				admin: this.driftClient.wallet.publicKey,
-				driftState: await this.driftClient.getStatePublicKey(),
-				// @ts-ignore
-				logAccount: FUEL_RESET_LOG_ACCOUNT,
-			})
-			.instruction();
-	}
-
-	public async managerUpdateFuelDistributionMode(
-		vault: PublicKey,
-		fuelDistributionMode: FuelDistributionMode,
-		txParams?: TxParams
-	): Promise<TransactionSignature> {
-		return await this.createAndSendTxn(
-			[
-				await this.getManagerUpdateFuelDistributionModeIx(
-					vault,
-					fuelDistributionMode
-				),
-			],
-			txParams
-		);
-	}
-
-	public async getManagerUpdateFuelDistributionModeIx(
-		vault: PublicKey,
-		fuelDistributionMode: FuelDistributionMode
-	): Promise<TransactionInstruction> {
-		const vaultAccount = await this.program.account.vault.fetch(vault);
-		return this.program.methods
-			.managerUpdateFuelDistributionMode(fuelDistributionMode as number)
-			.accounts({
-				vault,
-				manager: vaultAccount.manager,
 			})
 			.instruction();
 	}

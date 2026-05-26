@@ -34,7 +34,7 @@ import {
 	WRAPPED_SOL_MINT,
 	convertToNumber,
 	OrderParamsBitFlag,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import {
 	bootstrapSignerClientAndUser,
 	calculateAllTokenizedVaultPdas,

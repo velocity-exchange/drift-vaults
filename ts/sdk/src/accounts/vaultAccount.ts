@@ -6,7 +6,7 @@ import {
 	PERCENTAGE_PRECISION,
 	ZERO,
 	BN,
-} from '@drift-labs/sdk';
+} from '@velocity-exchange/sdk';
 import { PublicKey } from '@solana/web3.js';
 import { DriftVaults } from '../types/drift_vaults';
 import { Vault, VaultAccountEvents, VaultProtocol } from '../types/types';

@@ -1,4 +1,4 @@
-import { BN, DataAndSlot, Event } from '@drift-labs/sdk';
+import { BN, DataAndSlot, Event } from '@velocity-exchange/sdk';
 import { PublicKey } from '@solana/web3.js';
 import { EventEmitter } from 'events';
 import StrictEventEmitter from 'strict-event-emitter-types';
@@ -102,14 +102,10 @@ export type Vault = {
 	permissioned: boolean;
 	lastManagerWithdrawRequest: WithdrawRequest;
 	vaultProtocol: boolean;
-	fuelDistributionMode: FuelDistributionMode;
 	feeUpdateStatus: FeeUpdateStatus;
 	vaultClass: VaultClass;
-	lastCumulativeFuelPerShareTs: number;
-	cumulativeFuelPerShare: BN;
-	cumulativeFuel: BN;
 	managerBorrowedValue: BN;
-	padding: BN[];
+	padding: number[];
 };
 
 export enum VaultClass {
@@ -123,11 +119,6 @@ export function isNormalVaultClass(vaultClass: number | VaultClass): boolean {
 
 export function isTrustedVaultClass(vaultClass: number | VaultClass): boolean {
 	return (vaultClass & VaultClass.TRUSTED) === VaultClass.TRUSTED;
-}
-
-export enum FuelDistributionMode {
-	UsersOnly = 0,
-	UsersAndManager = 1,
 }
 
 export enum FeeUpdateStatus {
@@ -164,10 +155,8 @@ export type VaultDepositor = {
 	cumulativeProfitShareAmount: BN;
 	vaultSharesBase: number;
 	profitShareFeePaid: BN;
-	lastFuelUpdateTs: number;
-	cumulativeFuelPerShareAmount: BN;
-	fuelAmount: BN;
-	padding: BN | BN[];
+	paddingAlign: number;
+	padding: BN[];
 };
 
 export type VaultProtocol = {
@@ -288,18 +277,6 @@ export type VaultDepositorV1Record = {
 	managementFeeShares: BN;
 
 	depositOraclePrice: BN;
-};
-
-export type FuelSeasonRecord = {
-	ts: BN;
-	authority: PublicKey;
-	fuelInsurance: BN;
-	fuelDeposits: BN;
-	fuelBorrows: BN;
-	fuelPositions: BN;
-	fuelTaker: BN;
-	fuelMaker: BN;
-	fuelTotal: BN;
 };
 
 export type VaultsEventMap = {

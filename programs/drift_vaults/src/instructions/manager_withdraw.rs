@@ -4,13 +4,11 @@ use anchor_spl::token::{Token, TokenAccount};
 use drift::cpi::accounts::Withdraw as DriftWithdraw;
 use drift::instructions::optional_accounts::AccountMaps;
 use drift::program::Drift;
-use drift::state::user::{FuelOverflowStatus, User, UserStats};
+use drift::state::user::{User, UserStats};
 
 use crate::constraints::{is_manager_for_vault, is_user_for_vault, is_user_stats_for_vault};
 use crate::drift_cpi::WithdrawCPI;
-use crate::state::{
-    FeeUpdateProvider, FeeUpdateStatus, FuelOverflowProvider, Vault, VaultProtocolProvider,
-};
+use crate::state::{FeeUpdateProvider, FeeUpdateStatus, Vault, VaultProtocolProvider};
 use crate::token_cpi::TokenTransferCPI;
 use crate::{declare_vault_seeds, AccountMapProvider};
 
@@ -27,13 +25,8 @@ pub fn manager_withdraw<'info>(ctx: Context<'info, ManagerWithdraw<'info>>) -> R
     vault.validate_vault_protocol(&vp)?;
     let mut vp = vp.as_mut().map(|vp| vp.load_mut()).transpose()?;
 
-    let user_stats = ctx.accounts.drift_user_stats.load()?;
-    let has_fuel_overflow = FuelOverflowStatus::exists(user_stats.fuel_overflow_status);
-    let fuel_overflow = ctx.fuel_overflow(vp.is_some(), has_fuel_overflow);
-    user_stats.validate_fuel_overflow(&fuel_overflow)?;
-
     let has_fee_update = FeeUpdateStatus::has_pending_fee_update(vault.fee_update_status);
-    let mut fee_update = ctx.fee_update(vp.is_some(), has_fuel_overflow, has_fee_update);
+    let mut fee_update = ctx.fee_update(vp.is_some(), has_fee_update);
     vault.validate_fee_update(&fee_update)?;
 
     let AccountMaps {
@@ -44,7 +37,6 @@ pub fn manager_withdraw<'info>(ctx: Context<'info, ManagerWithdraw<'info>>) -> R
         clock.slot,
         Some(spot_market_index),
         vp.is_some(),
-        has_fuel_overflow,
         has_fee_update,
     )?;
 
@@ -60,7 +52,6 @@ pub fn manager_withdraw<'info>(ctx: Context<'info, ManagerWithdraw<'info>>) -> R
     drop(spot_market);
     drop(vault);
     drop(user);
-    drop(user_stats);
     drop(vp);
 
     ctx.drift_withdraw(manager_withdraw_amount)?;
