@@ -1,13 +1,11 @@
 use crate::constraints::{is_manager_for_vault, is_user_for_vault, is_user_stats_for_vault};
 use crate::state::events::ManagerUpdateBorrowRecord;
-use crate::state::{
-    FeeUpdateProvider, FeeUpdateStatus, FuelOverflowProvider, VaultProtocolProvider,
-};
+use crate::state::{FeeUpdateProvider, FeeUpdateStatus, VaultProtocolProvider};
 use crate::AccountMapProvider;
 use crate::{error::ErrorCode, validate, Vault};
 use anchor_lang::prelude::*;
 use drift::instructions::optional_accounts::AccountMaps;
-use drift::state::user::{FuelOverflowStatus, User, UserStats};
+use drift::state::user::{User, UserStats};
 
 pub fn manager_update_borrow<'info>(
     ctx: Context<'info, ManagerUpdateBorrow<'info>>,
@@ -28,26 +26,15 @@ pub fn manager_update_borrow<'info>(
     vault.validate_vault_protocol(&vp)?;
     let vp = vp.as_mut().map(|vp| vp.load_mut()).transpose()?;
 
-    let user_stats = ctx.accounts.drift_user_stats.load()?;
-    let has_fuel_overflow = FuelOverflowStatus::exists(user_stats.fuel_overflow_status);
-    let fuel_overflow = ctx.fuel_overflow(vp.is_some(), has_fuel_overflow);
-    user_stats.validate_fuel_overflow(&fuel_overflow)?;
-
     let has_fee_update = FeeUpdateStatus::has_pending_fee_update(vault.fee_update_status);
-    let fee_update = ctx.fee_update(vp.is_some(), has_fuel_overflow, has_fee_update);
+    let fee_update = ctx.fee_update(vp.is_some(), has_fee_update);
     vault.validate_fee_update(&fee_update)?;
 
     let AccountMaps {
         perp_market_map,
         spot_market_map,
         mut oracle_map,
-    } = ctx.load_maps(
-        clock.slot,
-        None,
-        vp.is_some(),
-        has_fuel_overflow,
-        has_fee_update,
-    )?;
+    } = ctx.load_maps(clock.slot, None, vp.is_some(), has_fee_update)?;
 
     let user = ctx.accounts.drift_user.load()?;
 
@@ -59,7 +46,6 @@ pub fn manager_update_borrow<'info>(
 
     drop(vault);
     drop(user);
-    drop(user_stats);
     drop(vp);
 
     let vault = ctx.accounts.vault.load()?;

@@ -55,8 +55,6 @@ pub enum ErrorCode {
     VaultProtocolMissing,
     #[msg("InvalidTokenization")]
     InvalidTokenization,
-    #[msg("InvalidFuelDistributionMode")]
-    InvalidFuelDistributionMode,
     #[msg("FeeUpdateMissing")]
     FeeUpdateMissing,
     #[msg("InvalidFeeUpdateStatus")]

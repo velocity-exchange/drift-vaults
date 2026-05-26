@@ -1,5 +1,5 @@
 import { AnchorProvider } from '@coral-xyz/anchor';
-import { DriftClient, IWallet } from '@drift-labs/sdk';
+import { DriftClient, IWallet } from '@velocity-exchange/sdk';
 import { Connection, PublicKey, TransactionInstruction } from '@solana/web3.js';
 import { DriftVaults } from './types/drift_vaults';
 import driftVaultsIDL from './idl/drift_vaults.json';

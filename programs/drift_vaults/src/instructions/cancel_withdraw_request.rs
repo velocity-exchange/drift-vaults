@@ -1,12 +1,11 @@
 use anchor_lang::prelude::*;
 use drift::instructions::optional_accounts::AccountMaps;
 use drift::math::casting::Cast;
-use drift::state::user::{FuelOverflowStatus, User, UserStats};
+use drift::state::user::{User, UserStats};
 
 use crate::constraints::{
     is_authority_for_vault_depositor, is_user_for_vault, is_user_stats_for_vault,
 };
-use crate::state::FuelOverflowProvider;
 use crate::AccountMapProvider;
 use crate::{FeeUpdateProvider, FeeUpdateStatus, Vault, VaultDepositor, VaultProtocolProvider};
 
@@ -24,26 +23,15 @@ pub fn cancel_withdraw_request<'info>(
 
     let user = ctx.accounts.drift_user.load()?;
 
-    let user_stats = ctx.accounts.drift_user_stats.load()?;
-    let has_fuel_overflow = FuelOverflowStatus::exists(user_stats.fuel_overflow_status);
-    let fuel_overflow = ctx.fuel_overflow(vp.is_some(), has_fuel_overflow);
-    user_stats.validate_fuel_overflow(&fuel_overflow)?;
-
     let has_fee_update = FeeUpdateStatus::has_pending_fee_update(vault.fee_update_status);
-    let mut fee_update = ctx.fee_update(vp.is_some(), has_fuel_overflow, has_fee_update);
+    let mut fee_update = ctx.fee_update(vp.is_some(), has_fee_update);
     vault.validate_fee_update(&fee_update)?;
 
     let AccountMaps {
         perp_market_map,
         spot_market_map,
         mut oracle_map,
-    } = ctx.load_maps(
-        clock.slot,
-        None,
-        vp.is_some(),
-        has_fuel_overflow,
-        has_fee_update,
-    )?;
+    } = ctx.load_maps(clock.slot, None, vp.is_some(), has_fee_update)?;
 
     let vault_equity =
         vault.calculate_equity(&user, &perp_market_map, &spot_market_map, &mut oracle_map)?;
@@ -57,8 +45,6 @@ pub fn cancel_withdraw_request<'info>(
         &mut vp,
         &mut fee_update,
         clock.unix_timestamp,
-        &user_stats,
-        &fuel_overflow,
         oracle.price,
     )?;
 

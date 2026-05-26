@@ -1814,26 +1814,6 @@ export type DriftVaults = {
 			];
 		},
 		{
-			name: 'managerUpdateFuelDistributionMode';
-			discriminator: [23, 201, 108, 210, 88, 53, 123, 91];
-			accounts: [
-				{
-					name: 'vault';
-					writable: true;
-				},
-				{
-					name: 'manager';
-					signer: true;
-				}
-			];
-			args: [
-				{
-					name: 'fuelDistributionMode';
-					type: 'u8';
-				}
-			];
-		},
-		{
 			name: 'managerWithdraw';
 			discriminator: [201, 248, 190, 143, 86, 43, 183, 254];
 			accounts: [
@@ -2579,50 +2559,6 @@ export type DriftVaults = {
 			args: [];
 		},
 		{
-			name: 'resetFuelSeason';
-			discriminator: [199, 122, 192, 255, 32, 99, 63, 200];
-			accounts: [
-				{
-					name: 'vault';
-					writable: true;
-				},
-				{
-					name: 'vaultDepositor';
-					writable: true;
-				},
-				{
-					name: 'admin';
-					signer: true;
-				},
-				{
-					name: 'driftUserStats';
-					writable: true;
-				},
-				{
-					name: 'driftState';
-				}
-			];
-			args: [];
-		},
-		{
-			name: 'resetVaultFuelSeason';
-			discriminator: [190, 107, 13, 176, 10, 102, 134, 168];
-			accounts: [
-				{
-					name: 'vault';
-					writable: true;
-				},
-				{
-					name: 'admin';
-					signer: true;
-				},
-				{
-					name: 'driftState';
-				}
-			];
-			args: [];
-		},
-		{
 			name: 'tokenizeShares';
 			discriminator: [166, 4, 14, 227, 21, 161, 121, 122];
 			accounts: [
@@ -2791,29 +2727,6 @@ export type DriftVaults = {
 					};
 				}
 			];
-		},
-		{
-			name: 'updateCumulativeFuelAmount';
-			discriminator: [90, 71, 219, 233, 12, 81, 211, 11];
-			accounts: [
-				{
-					name: 'vault';
-					writable: true;
-				},
-				{
-					name: 'vaultDepositor';
-					writable: true;
-				},
-				{
-					name: 'signer';
-					signer: true;
-				},
-				{
-					name: 'driftUserStats';
-					writable: true;
-				}
-			];
-			args: [];
 		},
 		{
 			name: 'updateDelegate';
@@ -3117,10 +3030,6 @@ export type DriftVaults = {
 			discriminator: [30, 88, 241, 188, 216, 141, 47, 1];
 		},
 		{
-			name: 'fuelSeasonRecord';
-			discriminator: [19, 137, 119, 33, 224, 249, 6, 87];
-		},
-		{
 			name: 'managerBorrowRecord';
 			discriminator: [147, 180, 112, 14, 60, 116, 7, 193];
 		},
@@ -3272,31 +3181,26 @@ export type DriftVaults = {
 		},
 		{
 			code: 6024;
-			name: 'invalidFuelDistributionMode';
-			msg: 'invalidFuelDistributionMode';
-		},
-		{
-			code: 6025;
 			name: 'feeUpdateMissing';
 			msg: 'feeUpdateMissing';
 		},
 		{
-			code: 6026;
+			code: 6025;
 			name: 'invalidFeeUpdateStatus';
 			msg: 'invalidFeeUpdateStatus';
 		},
 		{
-			code: 6027;
+			code: 6026;
 			name: 'invalidVaultClass';
 			msg: 'invalidVaultClass';
 		},
 		{
-			code: 6028;
+			code: 6027;
 			name: 'invalidBorrowAmount';
 			msg: 'invalidBorrowAmount';
 		},
 		{
-			code: 6029;
+			code: 6028;
 			name: 'invalidRepayAmount';
 			msg: 'invalidRepayAmount';
 		}
@@ -3321,83 +3225,6 @@ export type DriftVaults = {
 					},
 					{
 						name: 'unlisted';
-					}
-				];
-			};
-		},
-		{
-			name: 'feeStructure';
-			type: {
-				kind: 'struct';
-				fields: [
-					{
-						name: 'feeTiers';
-						type: {
-							array: [
-								{
-									defined: {
-										name: 'feeTier';
-									};
-								},
-								10
-							];
-						};
-					},
-					{
-						name: 'fillerRewardStructure';
-						type: {
-							defined: {
-								name: 'orderFillerRewardStructure';
-							};
-						};
-					},
-					{
-						name: 'referrerRewardEpochUpperBound';
-						type: 'u64';
-					},
-					{
-						name: 'flatFillerFee';
-						type: 'u64';
-					}
-				];
-			};
-		},
-		{
-			name: 'feeTier';
-			type: {
-				kind: 'struct';
-				fields: [
-					{
-						name: 'feeNumerator';
-						type: 'u32';
-					},
-					{
-						name: 'feeDenominator';
-						type: 'u32';
-					},
-					{
-						name: 'makerRebateNumerator';
-						type: 'u32';
-					},
-					{
-						name: 'makerRebateDenominator';
-						type: 'u32';
-					},
-					{
-						name: 'referrerRewardNumerator';
-						type: 'u32';
-					},
-					{
-						name: 'referrerRewardDenominator';
-						type: 'u32';
-					},
-					{
-						name: 'refereeFeeNumerator';
-						type: 'u32';
-					},
-					{
-						name: 'refereeFeeDenominator';
-						type: 'u32';
 					}
 				];
 			};
@@ -3507,50 +3334,6 @@ export type DriftVaults = {
 					{
 						name: 'newHurdleRate';
 						type: 'u32';
-					}
-				];
-			};
-		},
-		{
-			name: 'fuelSeasonRecord';
-			type: {
-				kind: 'struct';
-				fields: [
-					{
-						name: 'ts';
-						type: 'i64';
-					},
-					{
-						name: 'authority';
-						type: 'pubkey';
-					},
-					{
-						name: 'fuelInsurance';
-						type: 'u128';
-					},
-					{
-						name: 'fuelDeposits';
-						type: 'u128';
-					},
-					{
-						name: 'fuelBorrows';
-						type: 'u128';
-					},
-					{
-						name: 'fuelPositions';
-						type: 'u128';
-					},
-					{
-						name: 'fuelTaker';
-						type: 'u128';
-					},
-					{
-						name: 'fuelMaker';
-						type: 'u128';
-					},
-					{
-						name: 'fuelTotal';
-						type: 'u128';
 					}
 				];
 			};
@@ -3956,30 +3739,6 @@ export type DriftVaults = {
 			};
 		},
 		{
-			name: 'oracleGuardRails';
-			type: {
-				kind: 'struct';
-				fields: [
-					{
-						name: 'priceDivergence';
-						type: {
-							defined: {
-								name: 'priceDivergenceGuardRails';
-							};
-						};
-					},
-					{
-						name: 'validity';
-						type: {
-							defined: {
-								name: 'validityGuardRails';
-							};
-						};
-					}
-				];
-			};
-		},
-		{
 			name: 'oracleSource';
 			type: {
 				kind: 'enum';
@@ -4245,26 +4004,6 @@ export type DriftVaults = {
 			};
 		},
 		{
-			name: 'orderFillerRewardStructure';
-			type: {
-				kind: 'struct';
-				fields: [
-					{
-						name: 'rewardNumerator';
-						type: 'u32';
-					},
-					{
-						name: 'rewardDenominator';
-						type: 'u32';
-					},
-					{
-						name: 'timeBasedRewardLowerBound';
-						type: 'u128';
-					}
-				];
-			};
-		},
-		{
 			name: 'orderStatus';
 			type: {
 				kind: 'enum';
@@ -4404,30 +4143,12 @@ export type DriftVaults = {
 						type: 'i64';
 					},
 					{
-						name: 'lpShares';
-						docs: [
-							'The number of lp (liquidity provider) shares the user has in this perp market',
-							'LP shares allow users to provide liquidity via the AMM',
-							'precision: BASE_PRECISION'
-						];
-						type: 'u64';
-					},
-					{
 						name: 'isolatedPositionScaledBalance';
 						docs: [
 							'The scaled balance of the isolated position',
 							'precision: SPOT_BALANCE_PRECISION'
 						];
 						type: 'u64';
-					},
-					{
-						name: 'lastQuoteAssetAmountPerLp';
-						docs: [
-							'The last quote asset amount per lp the amm had',
-							'Used to settle the users lp position',
-							'precision: QUOTE_PRECISION'
-						];
-						type: 'i64';
 					},
 					{
 						name: 'padding';
@@ -4498,22 +4219,6 @@ export type DriftVaults = {
 					},
 					{
 						name: 'short';
-					}
-				];
-			};
-		},
-		{
-			name: 'priceDivergenceGuardRails';
-			type: {
-				kind: 'struct';
-				fields: [
-					{
-						name: 'markOraclePercentDivergence';
-						type: 'u64';
-					},
-					{
-						name: 'oracleTwap5minPercentDivergence';
-						type: 'u64';
 					}
 				];
 			};
@@ -5033,31 +4738,6 @@ export type DriftVaults = {
 						type: 'u8';
 					},
 					{
-						name: 'fuelBoostDeposits';
-						docs: ['fuel multiplier for spot deposits', 'precision: 10'];
-						type: 'u8';
-					},
-					{
-						name: 'fuelBoostBorrows';
-						docs: ['fuel multiplier for spot borrows', 'precision: 10'];
-						type: 'u8';
-					},
-					{
-						name: 'fuelBoostTaker';
-						docs: ['fuel multiplier for spot taker', 'precision: 10'];
-						type: 'u8';
-					},
-					{
-						name: 'fuelBoostMaker';
-						docs: ['fuel multiplier for spot maker', 'precision: 10'];
-						type: 'u8';
-					},
-					{
-						name: 'fuelBoostInsurance';
-						docs: ['fuel multiplier for spot insurance stake', 'precision: 10'];
-						type: 'u8';
-					},
-					{
 						name: 'tokenProgramFlag';
 						type: 'u8';
 					},
@@ -5139,139 +4819,6 @@ export type DriftVaults = {
 						name: 'padding';
 						type: {
 							array: ['u8', 4];
-						};
-					}
-				];
-			};
-		},
-		{
-			name: 'state';
-			repr: {
-				kind: 'c';
-			};
-			type: {
-				kind: 'struct';
-				fields: [
-					{
-						name: 'admin';
-						type: 'pubkey';
-					},
-					{
-						name: 'whitelistMint';
-						type: 'pubkey';
-					},
-					{
-						name: 'discountMint';
-						type: 'pubkey';
-					},
-					{
-						name: 'signer';
-						type: 'pubkey';
-					},
-					{
-						name: 'srmVault';
-						type: 'pubkey';
-					},
-					{
-						name: 'perpFeeStructure';
-						type: {
-							defined: {
-								name: 'feeStructure';
-							};
-						};
-					},
-					{
-						name: 'spotFeeStructure';
-						type: {
-							defined: {
-								name: 'feeStructure';
-							};
-						};
-					},
-					{
-						name: 'oracleGuardRails';
-						type: {
-							defined: {
-								name: 'oracleGuardRails';
-							};
-						};
-					},
-					{
-						name: 'numberOfAuthorities';
-						type: 'u64';
-					},
-					{
-						name: 'numberOfSubAccounts';
-						type: 'u64';
-					},
-					{
-						name: 'lpCooldownTime';
-						type: 'u64';
-					},
-					{
-						name: 'liquidationMarginBufferRatio';
-						type: 'u32';
-					},
-					{
-						name: 'settlementDuration';
-						type: 'u16';
-					},
-					{
-						name: 'numberOfMarkets';
-						type: 'u16';
-					},
-					{
-						name: 'numberOfSpotMarkets';
-						type: 'u16';
-					},
-					{
-						name: 'signerNonce';
-						type: 'u8';
-					},
-					{
-						name: 'minPerpAuctionDuration';
-						type: 'u8';
-					},
-					{
-						name: 'defaultMarketOrderTimeInForce';
-						type: 'u8';
-					},
-					{
-						name: 'defaultSpotAuctionDuration';
-						type: 'u8';
-					},
-					{
-						name: 'exchangeStatus';
-						type: 'u8';
-					},
-					{
-						name: 'liquidationDuration';
-						type: 'u8';
-					},
-					{
-						name: 'initialPctToLiquidate';
-						type: 'u16';
-					},
-					{
-						name: 'maxNumberOfSubAccounts';
-						type: 'u16';
-					},
-					{
-						name: 'maxInitializeUserFee';
-						type: 'u16';
-					},
-					{
-						name: 'featureBitFlags';
-						type: 'u8';
-					},
-					{
-						name: 'lpPoolFeatureBitFlags';
-						type: 'u8';
-					},
-					{
-						name: 'padding';
-						type: {
-							array: ['u8', 8];
 						};
 					}
 				];
@@ -5521,11 +5068,6 @@ export type DriftVaults = {
 						};
 					},
 					{
-						name: 'lastAddPerpLpSharesTs';
-						docs: ['The last time the user added perp lp positions'];
-						type: 'i64';
-					},
-					{
 						name: 'totalDeposits';
 						docs: [
 							'The total values of deposits the user has made',
@@ -5650,27 +5192,18 @@ export type DriftVaults = {
 						type: 'bool';
 					},
 					{
-						name: 'paddingFormerMarginMode';
-						type: 'u8';
-					},
-					{
 						name: 'poolId';
 						type: 'u8';
 					},
 					{
-						name: 'padding1';
-						type: {
-							array: ['u8', 3];
-						};
-					},
-					{
-						name: 'lastFuelBonusUpdateTs';
-						type: 'u32';
+						name: 'specialUserStatus';
+						docs: ['Whether the user is a special user (vamm hedger, etc)'];
+						type: 'u8';
 					},
 					{
 						name: 'padding';
 						type: {
-							array: ['u8', 12];
+							array: ['u8', 14];
 						};
 					}
 				];
@@ -5838,41 +5371,6 @@ export type DriftVaults = {
 						type: 'u8';
 					},
 					{
-						name: 'fuelOverflowStatus';
-						docs: ['whether the user has a FuelOverflow account'];
-						type: 'u8';
-					},
-					{
-						name: 'fuelInsurance';
-						docs: ['accumulated fuel for token amounts of insurance'];
-						type: 'u32';
-					},
-					{
-						name: 'fuelDeposits';
-						docs: ['accumulated fuel for notional of deposits'];
-						type: 'u32';
-					},
-					{
-						name: 'fuelBorrows';
-						docs: ['accumulate fuel bonus for notional of borrows'];
-						type: 'u32';
-					},
-					{
-						name: 'fuelPositions';
-						docs: ['accumulated fuel for perp open interest'];
-						type: 'u32';
-					},
-					{
-						name: 'fuelTaker';
-						docs: ['accumulate fuel bonus for taker volume'];
-						type: 'u32';
-					},
-					{
-						name: 'fuelMaker';
-						docs: ['accumulate fuel bonus for maker volume'];
-						type: 'u32';
-					},
-					{
 						name: 'ifStakedGovTokenAmount';
 						docs: [
 							'The amount of tokens staked in the governance spot markets if'
@@ -5880,41 +5378,10 @@ export type DriftVaults = {
 						type: 'u64';
 					},
 					{
-						name: 'lastFuelIfBonusUpdateTs';
-						docs: [
-							'last unix ts user stats data was used to update if fuel (u32 to save space)'
-						];
-						type: 'u32';
-					},
-					{
 						name: 'padding';
 						type: {
-							array: ['u8', 12];
+							array: ['u8', 40];
 						};
-					}
-				];
-			};
-		},
-		{
-			name: 'validityGuardRails';
-			type: {
-				kind: 'struct';
-				fields: [
-					{
-						name: 'slotsBeforeStaleForAmm';
-						type: 'i64';
-					},
-					{
-						name: 'slotsBeforeStaleForMargin';
-						type: 'i64';
-					},
-					{
-						name: 'confidenceIntervalMaxSize';
-						type: 'u64';
-					},
-					{
-						name: 'tooVolatileRatio';
-						type: 'i64';
 					}
 				];
 			};
@@ -5994,18 +5461,6 @@ export type DriftVaults = {
 							'The sum of all shares: deposits from users, manager deposits, manager profit/fee, and protocol profit/fee.',
 							'The manager deposits are total_shares - user_shares - protocol_profit_and_fee_shares.'
 						];
-						type: 'u128';
-					},
-					{
-						name: 'cumulativeFuelPerShare';
-						docs: [
-							'The cumulative fuel per share (scaled up by 1e6 to avoid losing precision)'
-						];
-						type: 'u128';
-					},
-					{
-						name: 'cumulativeFuel';
-						docs: ['The total fuel accumulated'];
 						type: 'u128';
 					},
 					{
@@ -6135,11 +5590,6 @@ export type DriftVaults = {
 						type: 'u32';
 					},
 					{
-						name: 'lastCumulativeFuelPerShareTs';
-						docs: ['The timestamp cumulative_fuel_per_share was last updated'];
-						type: 'u32';
-					},
-					{
 						name: 'spotMarketIndex';
 						docs: [
 							'The spot market index the vault deposits into/withdraws from'
@@ -6162,13 +5612,6 @@ export type DriftVaults = {
 						type: 'bool';
 					},
 					{
-						name: 'fuelDistributionMode';
-						docs: [
-							'How fuel distribution should be treated [`FuelDistributionMode`]. Default is `UsersOnly`'
-						];
-						type: 'u8';
-					},
-					{
 						name: 'feeUpdateStatus';
 						docs: [
 							'Whether the vault has a FeeUpdate account [`FeeUpdateStatus`]. Default is `FeeUpdateStatus::None`',
@@ -6187,7 +5630,7 @@ export type DriftVaults = {
 					{
 						name: 'padding';
 						type: {
-							array: ['u64', 2];
+							array: ['u8', 5];
 						};
 					}
 				];
@@ -6226,16 +5669,6 @@ export type DriftVaults = {
 						docs: [
 							"share of vault owned by this depositor. vault_shares / vault.total_shares is depositor's ownership of vault_equity"
 						];
-						type: 'u128';
-					},
-					{
-						name: 'cumulativeFuelPerShareAmount';
-						docs: ['precision: FUEL_SHARE_PRECISION'];
-						type: 'u128';
-					},
-					{
-						name: 'fuelAmount';
-						docs: ['precision: none'];
 						type: 'u128';
 					},
 					{
@@ -6284,7 +5717,7 @@ export type DriftVaults = {
 						type: 'u32';
 					},
 					{
-						name: 'lastFuelUpdateTs';
+						name: 'paddingAlign';
 						type: 'u32';
 					},
 					{

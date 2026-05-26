@@ -1,13 +1,10 @@
 import * as anchor from '@coral-xyz/anchor';
 import { AnchorProvider, Program } from '@coral-xyz/anchor';
-import {
-	BankrunContextWrapper,
-	BankrunConnection,
-} from './bankrunConnection';
+import { BankrunContextWrapper, BankrunConnection } from './bankrunConnection';
 import { LAMPORTS_PER_SOL, PublicKey, Transaction } from '@solana/web3.js';
 import pythIDL from '../fixtures/pyth.json';
 import { assert } from './testHelpers';
-import { BN } from '@drift-labs/sdk';
+import { BN } from '@velocity-exchange/sdk';
 import buffer from 'buffer';
 
 const parsePriceInfo = (data, exponent) => {
@@ -76,9 +73,9 @@ function readBigInt64LE(buffer, offset = 0) {
 		(BigInt(val) << BigInt(32)) +
 		BigInt(
 			first +
-			buffer[++offset] * 2 ** 8 +
-			buffer[++offset] * 2 ** 16 +
-			buffer[++offset] * 2 ** 24
+				buffer[++offset] * 2 ** 8 +
+				buffer[++offset] * 2 ** 16 +
+				buffer[++offset] * 2 ** 24
 		)
 	);
 }
@@ -156,7 +153,11 @@ const parsePriceData = (data) => {
 	);
 	const aggregatePriceInfo = parsePriceInfo(data.slice(208, 240), exponent);
 	// Price components - up to 32.
-	const priceComponents: { publisher: PublicKey | null, aggregate: any, latest: any }[] = [];
+	const priceComponents: {
+		publisher: PublicKey | null;
+		aggregate: any;
+		latest: any;
+	}[] = [];
 	let offset = 240;
 	let shouldContinue = true;
 	while (offset < data.length && shouldContinue) {
@@ -222,7 +223,6 @@ export const getFeedDataNoProgram = async (
 	return parsePriceData(info.value!.data);
 };
 
-
 export const createPriceFeedBankrun = async ({
 	oracleProgram,
 	context,
@@ -236,7 +236,10 @@ export const createPriceFeedBankrun = async ({
 	confidence?: number;
 	expo?: number;
 }): Promise<PublicKey> => {
-	const conf = confidence === undefined ? new BN((initPrice / 10) * 10 ** -expo) : new anchor.BN(confidence);
+	const conf =
+		confidence === undefined
+			? new BN((initPrice / 10) * 10 ** -expo)
+			: new anchor.BN(confidence);
 	const collateralTokenFeed = new anchor.web3.Account();
 	const createAccountIx = anchor.web3.SystemProgram.createAccount({
 		fromPubkey: context.context.payer.publicKey,
