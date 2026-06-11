@@ -1200,7 +1200,7 @@ describe('TestProtocolVaults', () => {
 			withdrawAmount.toNumber() / QUOTE_PRECISION.toNumber()
 		);
 		// $1000 deposit + (~$10.04 in profit - 10% profit share = ~$9.04).
-		// Tolerance: shadow velocity's fee/PnL math velocitys by <$0.001 vs the original goldens.
+		// Tolerance: velocity's fee/PnL math differs by <$0.001 vs the original goldens.
 		const expectedWithdraw = new BN(1_009_037_051);
 		assert(
 			withdrawAmount.sub(expectedWithdraw).abs().lte(new BN(1000)),
@@ -1411,7 +1411,7 @@ describe('TestProtocolVaults', () => {
 			vpSharesAfterWithdraw.toNumber()
 		);
 		// f64 to u64 conversion rounds down to not withdraw more equity than available,
-		// so a small residual is left behind (≈1 share). Tolerance accommodates shadow velocity.
+		// so a small residual is left behind (≈1 share). Tolerance accommodates velocity.
 		assert(
 			vpSharesAfterWithdraw.lte(new BN(1000)),
 			`vpSharesAfterWithdraw ${vpSharesAfterWithdraw.toString()} should be a small residual`
@@ -2114,7 +2114,7 @@ describe('TestTokenizedVelocityVaults', () => {
 
 		const user = delegateVelocityClient.getUser(0, vault);
 		// Vault buys SOL-PERP at MM ask (notional ~99% of free collateral). Spot DLOB trading
-		// is disabled in shadow velocity, so we test profit-share via a perp position whose
+		// is disabled in velocity, so we test profit-share via a perp position whose
 		// unrealized PnL moves when we tweak the SOL oracle below.
 		const vaultFreeCollateral = user
 			.getFreeCollateral()
@@ -2801,8 +2801,16 @@ describe('TestTokenizedVelocityVaults', () => {
 				print: true,
 			});
 
-			// vd equity + new deposit = total token value
-			assert(vd0Values1.vaultDepositorEquity.add(usdcAmount).eq(ataValue));
+			// vd equity + new deposit = total token value. Tolerance instead of
+			// exact equality: several txs (deposit, init tokenized vault, tokenize)
+			// land between the equity snapshot and this read, and with the
+			// decoupled AMM the vault's equity ticks slightly per slot
+			// (funding/interest accrual), so the snapshot goes stale.
+			const expectedAtaValue = vd0Values1.vaultDepositorEquity.add(usdcAmount);
+			assert(
+				ataValue.sub(expectedAtaValue).abs().lte(new BN(10_000)),
+				`ataValue ${ataValue.toString()} not within 10000 of ${expectedAtaValue.toString()}`
+			);
 
 			await validateTotalUserShares(program, vault);
 		} catch (e) {
@@ -2833,7 +2841,7 @@ describe('TestTokenizedVelocityVaults', () => {
 	// rejected. Putting this test BEFORE the rebase test was tried but regressed the
 	// rebase test — when this test fails its mmVelocityClient stays subscribed with stale
 	// MM orders, polluting the next test's market state. The doWashTrading parametrization
-	// (oracleNudgeBpsPerIter, midLoopHook) is in place and ready to use once: (a) shadow
+	// (oracleNudgeBpsPerIter, midLoopHook) is in place and ready to use once: (a) velocity
 	// exposes a test-only setter for the perp market 5-min TWAP (or relaxes the band
 	// check under a test feature gate), or (b) spot DLOB returns so this test can use
 	// SOL-spot's separate TWAP path.

@@ -436,9 +436,9 @@ export async function initializeSolSpotMarketMaker(
 	solAmount?: BN,
 	usdcAmount?: BN,
 	accountLoader?: BulkAccountLoader,
-	// Shadow velocity permanently disables spot-DLOB trading (ErrorCode::SpotDlobTradingDisabled),
+	// Velocity permanently disables spot-DLOB trading (ErrorCode::SpotDlobTradingDisabled),
 	// so MM defaults to quoting SOL-PERP (market index 0). Pass MarketType.SPOT only if/when
-	// shadow re-enables the spot DLOB.
+	// velocity re-enables the spot DLOB.
 	mmMarketType: MarketType = MarketType.PERP
 ): Promise<{
 	velocityClient: TestClient;
@@ -1496,7 +1496,7 @@ export async function doWashTrading({
 	mmQuoteSpreadBps = 500,
 	mmQuoteOffsetBps = 0,
 	doSell = true,
-	// Defaults to PERP because shadow velocity disables spot DLOB trading. Set this and the MM's
+	// Defaults to PERP because velocity disables spot DLOB trading. Set this and the MM's
 	// `mmMarketType` together if both ends should still trade spot.
 	marketType = MarketType.PERP,
 	// Optional gradual-drain mode. When `oracleNudgeBpsPerIter` is non-zero AND `oracleAccount`

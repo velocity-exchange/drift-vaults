@@ -2,9 +2,9 @@
 
 ## Context
 
-When the Anchor 1.0 / shadow-velocity migration re-enabled the seven `it.skip`'d
+When the Anchor 1.0 / velocity migration re-enabled the seven `it.skip`'d
 tests in `tests/velocityVaults.ts`, the four `SpotDlobTradingDisabled` tests had to
-be rewritten to use SOL-PERP instead of SOL-spot, because shadow velocity
+be rewritten to use SOL-PERP instead of SOL-spot, because velocity
 permanently stubs `placeAndTakeSpotOrder` / `placeAndMakeSpotOrder` to throw.
 This was the right call (the tests are about vault behavior under equity
 movement, and perp gets us there), but it left three gaps in coverage that this
@@ -135,7 +135,7 @@ reasonable fill at the restored oracle diverges past velocity's 50% TWAP band
 and gets rejected. Reordering this test to run *before* the rebase test
 was tried but regressed the rebase test: when the gradual-gain test fails,
 its `mmVelocityClient` stays subscribed with stale MM orders and the next test
-sees a polluted market state. To unblock, one of: (a) shadow exposes a
+sees a polluted market state. To unblock, one of: (a) velocity exposes a
 test-only setter for the perp-market 5-min TWAP (or relaxes the band check
 under a test feature gate), (b) spot DLOB returns so this test can use
 SOL-spot's separate TWAP path, or (c) restructure into a wholly separate
@@ -145,10 +145,10 @@ TWAP.
 ### 3. Spot DLOB matching itself
 
 `placeAndTakeSpotOrder`, `placeAndMakeSpotOrder`, MM crossing spot orders,
-spot fulfillment configs, etc. — all permanently stubbed to throw in shadow.
+spot fulfillment configs, etc. — all permanently stubbed to throw in velocity.
 Not testable today by design.
 
-**No action needed unless shadow re-enables the spot DLOB.** If it does, the
+**No action needed unless velocity re-enables the spot DLOB.** If it does, the
 helper changes are reversible: `initializeSolSpotMarketMaker` and
 `doWashTrading` both accept a `marketType` / `mmMarketType` parameter — pass
 `MarketType.SPOT` to flip back to spot quoting. The spot branches in
@@ -178,7 +178,7 @@ arg shape: `fulfillmentConfig` at index 1, `makerInfo` at index 2 — vs perp's
   If you change leverage in `longBaseAmount`, the equity-vs-oracle slope shifts
   and the oracle window narrows; the dynamic calc will follow but you may
   trip velocity's `too_volatile_ratio = 5` (default state guard rail —
-  `programs/velocity/src/state/state.rs` in shadow). Keep oracle within
+  `programs/velocity/src/state/state.rs` in the velocity repo). Keep oracle within
   `[twap/5, twap×5]`.
 
 - The rebase suite's `afterAll` restores the SOL oracle to
