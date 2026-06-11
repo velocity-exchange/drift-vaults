@@ -1,7 +1,7 @@
 import {
 	BN,
 	BigNum,
-	DriftClient,
+	VelocityClient,
 	getInsuranceFundStakeAccountPublicKey,
 	getUserAccountPublicKey,
 	getUserAccountPublicKeySync,
@@ -19,7 +19,7 @@ import {
 	QUOTE_PRECISION_EXP,
 } from '@velocity-exchange/sdk';
 import { BorshAccountsCoder, Program, ProgramAccount } from '@coral-xyz/anchor';
-import { DriftVaults } from './types/drift_vaults';
+import { VelocityVaults } from './types/velocity_vaults';
 import {
 	getTokenizedVaultAddressSync,
 	getTokenizedVaultMintAddressSync,
@@ -86,39 +86,39 @@ export type TxParams = {
 };
 
 export class VaultClient {
-	driftClient: DriftClient;
+	velocityClient: VelocityClient;
 	metaplex?: Metaplex;
-	program: Program<DriftVaults>;
+	program: Program<VelocityVaults>;
 	cliMode: boolean;
 
 	/**
-	 * Cache map of drift user accounts of vaults.
+	 * Cache map of velocity user accounts of vaults.
 	 */
 	readonly vaultUsers: UserMap;
 
 	constructor({
-		driftClient,
+		velocityClient,
 		program,
 		metaplex,
 		// @deprecated, no longer used
 		cliMode,
 		userMapConfig,
 	}: {
-		driftClient: DriftClient;
-		program: Program<DriftVaults>;
+		velocityClient: VelocityClient;
+		program: Program<VelocityVaults>;
 		metaplex?: Metaplex;
 		// @deprecated, no longer used
 		cliMode?: boolean;
 		userMapConfig?: UserMapConfig;
 	}) {
-		this.driftClient = driftClient;
+		this.velocityClient = velocityClient;
 		this.metaplex = metaplex;
 		this.program = program;
 		this.cliMode = !!cliMode;
 
 		if (!userMapConfig) {
 			this.vaultUsers = new UserMap({
-				driftClient: driftClient,
+				velocityClient: velocityClient,
 				subscriptionConfig: {
 					type: 'polling',
 					frequency: 1000,
@@ -139,7 +139,7 @@ export class VaultClient {
 		_skipFuelOverflow = false,
 		skipFeeUpdate = false
 	) {
-		const remainingAccounts = this.driftClient.getRemainingAccounts({
+		const remainingAccounts = this.velocityClient.getRemainingAccounts({
 			userAccounts,
 			writableSpotMarketIndexes,
 		});
@@ -174,7 +174,7 @@ export class VaultClient {
 
 	private async checkIfAccountExists(account: PublicKey): Promise<boolean> {
 		try {
-			const accountInfo = await this.driftClient.connection.getAccountInfo(
+			const accountInfo = await this.velocityClient.connection.getAccountInfo(
 				account
 			);
 			return accountInfo != null;
@@ -345,8 +345,10 @@ export class VaultClient {
 		)) as ProgramAccount<VaultDepositor>[];
 	}
 
-	public async getSubscribedVaultUser(vaultDriftUserAccountPubKey: PublicKey) {
-		return this.vaultUsers.mustGet(vaultDriftUserAccountPubKey.toBase58(), {
+	public async getSubscribedVaultUser(
+		vaultVelocityUserAccountPubKey: PublicKey
+	) {
+		return this.vaultUsers.mustGet(vaultVelocityUserAccountPubKey.toBase58(), {
 			type: 'websocket',
 		});
 	}
@@ -460,10 +462,10 @@ export class VaultClient {
 			vault: vaultAccount,
 			factorUnrealizedPNL: params.factorUnrealizedPNL,
 		});
-		const spotMarket = this.driftClient.getSpotMarketAccount(
+		const spotMarket = this.velocityClient.getSpotMarketAccount(
 			vaultAccount.spotMarketIndex
 		);
-		const spotOracle = this.driftClient.getOracleDataForSpotMarket(
+		const spotOracle = this.velocityClient.getOracleDataForSpotMarket(
 			vaultAccount.spotMarketIndex
 		);
 		const spotPrecision = TEN.pow(new BN(spotMarket!.decimals));
@@ -560,10 +562,10 @@ export class VaultClient {
 			vaultProtocol
 		);
 
-		const spotMarket = this.driftClient.getSpotMarketAccount(
+		const spotMarket = this.velocityClient.getSpotMarketAccount(
 			vaultAccount.spotMarketIndex
 		);
-		const spotOracle = this.driftClient.getOracleDataForSpotMarket(
+		const spotOracle = this.velocityClient.getOracleDataForSpotMarket(
 			vaultAccount.spotMarketIndex
 		);
 		const spotPrecision = TEN.pow(new BN(spotMarket!.decimals));
@@ -629,34 +631,34 @@ export class VaultClient {
 			vault
 		);
 
-		const driftState = await this.driftClient.getStatePublicKey();
-		const spotMarket = this.driftClient.getSpotMarketAccount(
+		const velocityState = await this.velocityClient.getStatePublicKey();
+		const spotMarket = this.velocityClient.getSpotMarketAccount(
 			params.spotMarketIndex
 		);
 		if (!spotMarket) {
 			throw new Error(
-				`Spot market ${params.spotMarketIndex} not found on driftClient`
+				`Spot market ${params.spotMarketIndex} not found on velocityClient`
 			);
 		}
 
 		const userStatsKey = getUserStatsAccountPublicKey(
-			this.driftClient.program.programId,
+			this.velocityClient.program.programId,
 			vault
 		);
 		const userKey = getUserAccountPublicKeySync(
-			this.driftClient.program.programId,
+			this.velocityClient.program.programId,
 			vault
 		);
 
 		const accounts = {
-			driftSpotMarket: spotMarket.pubkey,
-			driftSpotMarketMint: spotMarket.mint,
-			driftUserStats: userStatsKey,
-			driftUser: userKey,
-			driftState,
+			velocitySpotMarket: spotMarket.pubkey,
+			velocitySpotMarketMint: spotMarket.mint,
+			velocityUserStats: userStatsKey,
+			velocityUser: userKey,
+			velocityState,
 			vault,
 			tokenAccount,
-			driftProgram: this.driftClient.program.programId,
+			velocityProgram: this.velocityClient.program.programId,
 		};
 
 		if (vaultProtocolParams) {
@@ -665,7 +667,7 @@ export class VaultClient {
 				vaultProtocol: vaultProtocolParams,
 			};
 
-			const uiAuthority = this.driftClient.wallet.publicKey;
+			const uiAuthority = this.velocityClient.wallet.publicKey;
 			const initializeVaultWithProtocolIx = await this.program.methods
 				.initializeVaultWithProtocol(_params)
 				.accounts({
@@ -678,7 +680,7 @@ export class VaultClient {
 		} else {
 			const _params: VaultParams = vaultParams;
 
-			const uiAuthority = this.driftClient.wallet.publicKey;
+			const uiAuthority = this.velocityClient.wallet.publicKey;
 			const initializeVaultIx = await this.program.methods
 				.initializeVault(_params)
 				.accounts({
@@ -716,13 +718,13 @@ export class VaultClient {
 	public async getUpdateDelegateIx(
 		vault: PublicKey,
 		delegate: PublicKey,
-		vaultDriftUser: PublicKey,
+		vaultVelocityUser: PublicKey,
 		vaultManager: PublicKey
 	): Promise<TransactionInstruction> {
 		const accounts = {
 			vault: vault,
-			driftUser: vaultDriftUser,
-			driftProgram: this.driftClient.program.programId,
+			velocityUser: vaultVelocityUser,
+			velocityProgram: this.velocityClient.program.programId,
 		};
 
 		return await this.program.methods
@@ -757,8 +759,8 @@ export class VaultClient {
 		const vaultAccount = await this.program.account.vault.fetch(vault);
 		const accounts = {
 			vault: vault,
-			driftUser: vaultAccount.user,
-			driftProgram: this.driftClient.program.programId,
+			velocityUser: vaultAccount.user,
+			velocityProgram: this.velocityClient.program.programId,
 		};
 
 		const user = await this.getSubscribedVaultUser(vaultAccount.user);
@@ -766,11 +768,11 @@ export class VaultClient {
 		const remainingAccounts: AccountMeta[] = [];
 		try {
 			const userStatsKey = getUserStatsAccountPublicKey(
-				this.driftClient.program.programId,
+				this.velocityClient.program.programId,
 				vault
 			);
-			const driftProgram = this.driftClient.program as any;
-			const userStats = (await driftProgram.account.userStats.fetch(
+			const velocityProgram = this.velocityClient.program as any;
+			const userStats = (await velocityProgram.account.userStats.fetch(
 				userStatsKey
 			)) as UserStatsAccount;
 			remainingAccounts.push(
@@ -831,8 +833,8 @@ export class VaultClient {
 
 		const accounts = {
 			vault: vault,
-			driftUser: vaultAccount.user,
-			driftProgram: this.driftClient.program.programId,
+			velocityUser: vaultAccount.user,
+			velocityProgram: this.velocityClient.program.programId,
 		};
 
 		const user = await this.getSubscribedVaultUser(vaultAccount.user);
@@ -840,11 +842,11 @@ export class VaultClient {
 		const remainingAccounts: AccountMeta[] = [];
 		try {
 			const userStatsKey = getUserStatsAccountPublicKey(
-				this.driftClient.program.programId,
+				this.velocityClient.program.programId,
 				vault
 			);
-			const driftProgram = this.driftClient.program as any;
-			const userStats = (await driftProgram.account.userStats.fetch(
+			const velocityProgram = this.velocityClient.program as any;
+			const userStats = (await velocityProgram.account.userStats.fetch(
 				userStatsKey
 			)) as UserStatsAccount;
 			remainingAccounts.push(
@@ -869,16 +871,16 @@ export class VaultClient {
 
 	private async handleWSolMovement(
 		amount: BN,
-		driftSpotMarket: SpotMarketAccount,
+		velocitySpotMarket: SpotMarketAccount,
 		userTokenAccount: PublicKey
 	) {
-		const isSolDeposit = driftSpotMarket.mint.equals(WRAPPED_SOL_MINT);
+		const isSolDeposit = velocitySpotMarket.mint.equals(WRAPPED_SOL_MINT);
 		const preIxs: TransactionInstruction[] = [];
 		const postIxs: TransactionInstruction[] = [];
 
 		if (isSolDeposit) {
 			const { ixs: createWSolAccountIxs, pubkey } =
-				await this.driftClient.getWrappedSolAccountCreationIxs(amount, true);
+				await this.velocityClient.getWrappedSolAccountCreationIxs(amount, true);
 
 			userTokenAccount = pubkey;
 
@@ -886,8 +888,8 @@ export class VaultClient {
 			postIxs.push(
 				createCloseAccountInstruction(
 					userTokenAccount,
-					this.driftClient.wallet.publicKey,
-					this.driftClient.wallet.publicKey,
+					this.velocityClient.wallet.publicKey,
+					this.velocityClient.wallet.publicKey,
 					[]
 				)
 			);
@@ -928,22 +930,22 @@ export class VaultClient {
 		managerTokenAccount?: PublicKey
 	): Promise<Array<TransactionInstruction>> {
 		const vaultAccount = await this.program.account.vault.fetch(vault);
-		const driftSpotMarket = this.driftClient.getSpotMarketAccount(
+		const velocitySpotMarket = this.velocityClient.getSpotMarketAccount(
 			vaultAccount.spotMarketIndex
 		);
-		if (!driftSpotMarket) {
+		if (!velocitySpotMarket) {
 			throw new Error(
-				`Spot market ${vaultAccount.spotMarketIndex} not found on driftClient`
+				`Spot market ${vaultAccount.spotMarketIndex} not found on velocityClient`
 			);
 		}
 
 		const user = await this.getSubscribedVaultUser(vaultAccount.user);
 		const userStatsKey = getUserStatsAccountPublicKey(
-			this.driftClient.program.programId,
+			this.velocityClient.program.programId,
 			vault
 		);
 		const userStats = (await (
-			this.driftClient.program as any
+			this.velocityClient.program as any
 		).account.userStats.fetch(userStatsKey)) as UserStatsAccount;
 		const remainingAccounts = this.getRemainingAccountsForUser(
 			[user.getUserAccount()],
@@ -958,21 +960,21 @@ export class VaultClient {
 		const accounts = {
 			vault,
 			vaultTokenAccount: vaultAccount.tokenAccount,
-			driftUser: await getUserAccountPublicKey(
-				this.driftClient.program.programId,
+			velocityUser: await getUserAccountPublicKey(
+				this.velocityClient.program.programId,
 				vault
 			),
-			driftUserStats: getUserStatsAccountPublicKey(
-				this.driftClient.program.programId,
+			velocityUserStats: getUserStatsAccountPublicKey(
+				this.velocityClient.program.programId,
 				vault
 			),
-			driftProgram: this.driftClient.program.programId,
-			driftState: await this.driftClient.getStatePublicKey(),
-			driftSpotMarketVault: driftSpotMarket.vault,
+			velocityProgram: this.velocityClient.program.programId,
+			velocityState: await this.velocityClient.getStatePublicKey(),
+			velocitySpotMarketVault: velocitySpotMarket.vault,
 			userTokenAccount:
 				managerTokenAccount ??
 				getAssociatedTokenAddressSync(
-					driftSpotMarket.mint,
+					velocitySpotMarket.mint,
 					vaultAccount.manager,
 					true
 				),
@@ -981,7 +983,7 @@ export class VaultClient {
 
 		const { userTokenAccount, preIxs, postIxs } = await this.handleWSolMovement(
 			amount,
-			driftSpotMarket,
+			velocitySpotMarket,
 			accounts.userTokenAccount
 		);
 
@@ -1024,11 +1026,11 @@ export class VaultClient {
 
 		const user = await this.getSubscribedVaultUser(vaultAccount.user);
 		const userStatsKey = getUserStatsAccountPublicKey(
-			this.driftClient.program.programId,
+			this.velocityClient.program.programId,
 			vault
 		);
 		const userStats = (await (
-			this.driftClient.program as any
+			this.velocityClient.program as any
 		).account.userStats.fetch(userStatsKey)) as UserStatsAccount;
 		const remainingAccounts = this.getRemainingAccountsForUser(
 			[user.getUserAccount()],
@@ -1042,8 +1044,8 @@ export class VaultClient {
 
 		const accounts = {
 			vault,
-			driftUser: vaultAccount.user,
-			driftUserStats: userStatsKey,
+			velocityUser: vaultAccount.user,
+			velocityUserStats: userStatsKey,
 		};
 
 		return this.program.instruction.managerRequestWithdraw(
@@ -1074,20 +1076,20 @@ export class VaultClient {
 		const vaultAccount = await this.program.account.vault.fetch(vault);
 
 		const userStatsKey = getUserStatsAccountPublicKey(
-			this.driftClient.program.programId,
+			this.velocityClient.program.programId,
 			vault
 		);
 
 		const accounts = {
 			manager: vaultAccount.manager,
 			vault,
-			driftUser: vaultAccount.user,
-			driftUserStats: userStatsKey,
+			velocityUser: vaultAccount.user,
+			velocityUserStats: userStatsKey,
 		};
 
 		const user = await this.getSubscribedVaultUser(vaultAccount.user);
 		const userStats = (await (
-			this.driftClient.program as any
+			this.velocityClient.program as any
 		).account.userStats.fetch(userStatsKey)) as UserStatsAccount;
 		const remainingAccounts = this.getRemainingAccountsForUser(
 			[user.getUserAccount()],
@@ -1120,11 +1122,11 @@ export class VaultClient {
 
 		const user = await this.getSubscribedVaultUser(vaultAccount.user);
 		const userStatsKey = getUserStatsAccountPublicKey(
-			this.driftClient.program.programId,
+			this.velocityClient.program.programId,
 			vault
 		);
 		const userStats = (await (
-			this.driftClient.program as any
+			this.velocityClient.program as any
 		).account.userStats.fetch(userStatsKey)) as UserStatsAccount;
 		const remainingAccounts = this.getRemainingAccountsForUser(
 			[user.getUserAccount()],
@@ -1136,12 +1138,12 @@ export class VaultClient {
 			false
 		);
 
-		const spotMarket = this.driftClient.getSpotMarketAccount(
+		const spotMarket = this.velocityClient.getSpotMarketAccount(
 			vaultAccount.spotMarketIndex
 		);
 		if (!spotMarket) {
 			throw new Error(
-				`Spot market ${vaultAccount.spotMarketIndex} not found on driftClient`
+				`Spot market ${vaultAccount.spotMarketIndex} not found on velocityClient`
 			);
 		}
 
@@ -1157,7 +1159,7 @@ export class VaultClient {
 
 		if (isSolMarket) {
 			const { ixs, pubkey } =
-				await this.driftClient.getWrappedSolAccountCreationIxs(ZERO, false);
+				await this.velocityClient.getWrappedSolAccountCreationIxs(ZERO, false);
 
 			userAta = pubkey;
 			preIxs.push(...ixs);
@@ -1171,7 +1173,7 @@ export class VaultClient {
 				)
 			);
 		} else {
-			const userAtaExists = await this.driftClient.connection.getAccountInfo(
+			const userAtaExists = await this.velocityClient.connection.getAccountInfo(
 				userAta
 			);
 			if (userAtaExists === null) {
@@ -1191,19 +1193,19 @@ export class VaultClient {
 				vault,
 				manager: vaultAccount.manager,
 				vaultTokenAccount: vaultAccount.tokenAccount,
-				driftUser: await getUserAccountPublicKey(
-					this.driftClient.program.programId,
+				velocityUser: await getUserAccountPublicKey(
+					this.velocityClient.program.programId,
 					vault
 				),
-				driftProgram: this.driftClient.program.programId,
-				driftUserStats: getUserStatsAccountPublicKey(
-					this.driftClient.program.programId,
+				velocityProgram: this.velocityClient.program.programId,
+				velocityUserStats: getUserStatsAccountPublicKey(
+					this.velocityClient.program.programId,
 					vault
 				),
-				driftState: await this.driftClient.getStatePublicKey(),
-				driftSpotMarketVault: spotMarket.vault,
+				velocityState: await this.velocityClient.getStatePublicKey(),
+				velocitySpotMarketVault: spotMarket.vault,
 				userTokenAccount: userAta,
-				driftSigner: this.driftClient.getStateAccount().signer,
+				velocitySigner: this.velocityClient.getStateAccount().signer,
 				tokenProgram: TOKEN_PROGRAM_ID,
 			},
 			remainingAccounts,
@@ -1236,30 +1238,30 @@ export class VaultClient {
 	): Promise<TransactionInstruction[]> {
 		const vaultAccount = await this.program.account.vault.fetch(vault);
 
-		const spotMarket = this.driftClient.getSpotMarketAccount(
+		const spotMarket = this.velocityClient.getSpotMarketAccount(
 			borrowSpotMarketIndex
 		);
 		if (!spotMarket) {
 			throw new Error(
-				`Spot market ${borrowSpotMarketIndex} not found on driftClient`
+				`Spot market ${borrowSpotMarketIndex} not found on velocityClient`
 			);
 		}
 
 		if (!managerTokenAccount) {
 			managerTokenAccount = getAssociatedTokenAddressSync(
 				spotMarket.mint,
-				this.driftClient.wallet.publicKey,
+				this.velocityClient.wallet.publicKey,
 				true
 			);
 		}
 
 		const user = await this.getSubscribedVaultUser(vaultAccount.user);
 		const userStatsKey = getUserStatsAccountPublicKey(
-			this.driftClient.program.programId,
+			this.velocityClient.program.programId,
 			vault
 		);
 		const userStats = (await (
-			this.driftClient.program as any
+			this.velocityClient.program as any
 		).account.userStats.fetch(userStatsKey)) as UserStatsAccount;
 		const remainingAccounts = this.getRemainingAccountsForUser(
 			[user.getUserAccount()],
@@ -1275,7 +1277,7 @@ export class VaultClient {
 		const postIxs = [];
 
 		const managerTokenAccountExists =
-			await this.driftClient.connection.getAccountInfo(managerTokenAccount);
+			await this.velocityClient.connection.getAccountInfo(managerTokenAccount);
 		if (managerTokenAccountExists === null) {
 			preIxs.push(
 				createAssociatedTokenAccountInstruction(
@@ -1293,11 +1295,13 @@ export class VaultClient {
 			true
 		);
 		const vaultBorrowTokenAccountExists =
-			await this.driftClient.connection.getAccountInfo(vaultBorrowTokenAccount);
+			await this.velocityClient.connection.getAccountInfo(
+				vaultBorrowTokenAccount
+			);
 		if (vaultBorrowTokenAccountExists === null) {
 			preIxs.push(
 				createAssociatedTokenAccountInstruction(
-					this.driftClient.wallet.publicKey,
+					this.velocityClient.wallet.publicKey,
 					vaultBorrowTokenAccount,
 					vault,
 					spotMarket.mint
@@ -1324,11 +1328,11 @@ export class VaultClient {
 					vault,
 					vaultTokenAccount: vaultBorrowTokenAccount,
 					manager: vaultAccount.manager,
-					driftUserStats: userStatsKey,
-					driftUser: vaultAccount.user,
-					driftState: await this.driftClient.getStatePublicKey(),
-					driftSpotMarketVault: spotMarket.vault,
-					driftSigner: this.driftClient.getStateAccount().signer,
+					velocityUserStats: userStatsKey,
+					velocityUser: vaultAccount.user,
+					velocityState: await this.velocityClient.getStatePublicKey(),
+					velocitySpotMarketVault: spotMarket.vault,
+					velocitySigner: this.velocityClient.getStateAccount().signer,
 					userTokenAccount: managerTokenAccount,
 				})
 				.remainingAccounts(remainingAccounts)
@@ -1373,10 +1377,10 @@ export class VaultClient {
 	): Promise<TransactionInstruction[]> {
 		const vaultAccount = await this.program.account.vault.fetch(vault);
 		const spotMarket =
-			this.driftClient.getSpotMarketAccount(repaySpotMarketIndex);
+			this.velocityClient.getSpotMarketAccount(repaySpotMarketIndex);
 		if (!spotMarket) {
 			throw new Error(
-				`Spot market ${repaySpotMarketIndex} not found on driftClient`
+				`Spot market ${repaySpotMarketIndex} not found on velocityClient`
 			);
 		}
 		const isSolMarket = spotMarket.mint.equals(WRAPPED_SOL_MINT);
@@ -1389,7 +1393,7 @@ export class VaultClient {
 			if (isSolMarket) {
 				// create wSOL
 				const { ixs, pubkey } =
-					await this.driftClient.getWrappedSolAccountCreationIxs(
+					await this.velocityClient.getWrappedSolAccountCreationIxs(
 						repayAmount,
 						true
 					);
@@ -1411,11 +1415,13 @@ export class VaultClient {
 			true
 		);
 		const vaultRepayTokenAccountExists =
-			await this.driftClient.connection.getAccountInfo(vaultRepayTokenAccount);
+			await this.velocityClient.connection.getAccountInfo(
+				vaultRepayTokenAccount
+			);
 		if (vaultRepayTokenAccountExists === null) {
 			preIxs.push(
 				createAssociatedTokenAccountInstruction(
-					this.driftClient.wallet.publicKey,
+					this.velocityClient.wallet.publicKey,
 					vaultRepayTokenAccount,
 					vault,
 					spotMarket.mint
@@ -1435,12 +1441,12 @@ export class VaultClient {
 		}
 
 		const userStatsKey = getUserStatsAccountPublicKey(
-			this.driftClient.program.programId,
+			this.velocityClient.program.programId,
 			vault
 		);
 		const user = await this.getSubscribedVaultUser(vaultAccount.user);
 		const userStats = (await (
-			this.driftClient.program as any
+			this.velocityClient.program as any
 		).account.userStats.fetch(userStatsKey)) as UserStatsAccount;
 		const remainingAccounts = this.getRemainingAccountsForUser(
 			[user.getUserAccount()],
@@ -1460,11 +1466,11 @@ export class VaultClient {
 					vault,
 					vaultTokenAccount: vaultRepayTokenAccount,
 					manager: vaultAccount.manager,
-					driftUserStats: userStatsKey,
-					driftUser: vaultAccount.user,
-					driftState: await this.driftClient.getStatePublicKey(),
-					driftSpotMarketVault: spotMarket.vault,
-					driftSigner: this.driftClient.getStateAccount().signer,
+					velocityUserStats: userStatsKey,
+					velocityUser: vaultAccount.user,
+					velocityState: await this.velocityClient.getStatePublicKey(),
+					velocitySpotMarketVault: spotMarket.vault,
+					velocitySigner: this.velocityClient.getStateAccount().signer,
 					userTokenAccount: managerTokenAccount,
 				})
 				.remainingAccounts(remainingAccounts)
@@ -1490,11 +1496,11 @@ export class VaultClient {
 
 		const user = await this.getSubscribedVaultUser(vaultAccount.user);
 		const userStatsKey = getUserStatsAccountPublicKey(
-			this.driftClient.program.programId,
+			this.velocityClient.program.programId,
 			vault
 		);
 		const userStats = (await (
-			this.driftClient.program as any
+			this.velocityClient.program as any
 		).account.userStats.fetch(userStatsKey)) as UserStatsAccount;
 		const remainingAccounts = this.getRemainingAccountsForUser(
 			[user.getUserAccount()],
@@ -1510,8 +1516,8 @@ export class VaultClient {
 			accounts: {
 				vault,
 				manager: vaultAccount.manager,
-				driftUserStats: userStatsKey,
-				driftUser: vaultAccount.user,
+				velocityUserStats: userStatsKey,
+				velocityUser: vaultAccount.user,
 			},
 			remainingAccounts,
 		});
@@ -1594,21 +1600,21 @@ export class VaultClient {
 
 		const user = await this.getSubscribedVaultUser(vaultAccount.user);
 
-		const spotMarket = this.driftClient.getSpotMarketAccount(
+		const spotMarket = this.velocityClient.getSpotMarketAccount(
 			vaultAccount.spotMarketIndex
 		);
 		if (!spotMarket) {
 			throw new Error(
-				`Spot market ${vaultAccount.spotMarketIndex} not found on driftClient`
+				`Spot market ${vaultAccount.spotMarketIndex} not found on velocityClient`
 			);
 		}
 
 		const userStatsKey = getUserStatsAccountPublicKey(
-			this.driftClient.program.programId,
+			this.velocityClient.program.programId,
 			vault
 		);
 		const userStats = (await (
-			this.driftClient.program as any
+			this.velocityClient.program as any
 		).account.userStats.fetch(userStatsKey)) as UserStatsAccount;
 		const remainingAccounts = this.getRemainingAccountsForUser(
 			[user.getUserAccount()],
@@ -1624,17 +1630,17 @@ export class VaultClient {
 			vault,
 			vaultDepositor,
 			manager: vaultAccount.manager,
-			driftUserStats: getUserStatsAccountPublicKey(
-				this.driftClient.program.programId,
+			velocityUserStats: getUserStatsAccountPublicKey(
+				this.velocityClient.program.programId,
 				vault
 			),
-			driftUser: await getUserAccountPublicKey(
-				this.driftClient.program.programId,
+			velocityUser: await getUserAccountPublicKey(
+				this.velocityClient.program.programId,
 				vault
 			),
-			driftState: await this.driftClient.getStatePublicKey(),
-			driftSigner: this.driftClient.getStateAccount().signer,
-			driftProgram: this.driftClient.program.programId,
+			velocityState: await this.velocityClient.getStatePublicKey(),
+			velocitySigner: this.velocityClient.getStateAccount().signer,
+			velocityProgram: this.velocityClient.program.programId,
 		};
 
 		return this.program.instruction.applyProfitShare({
@@ -1653,21 +1659,21 @@ export class VaultClient {
 
 		const user = await this.getSubscribedVaultUser(vaultAccount.user);
 
-		const spotMarket = this.driftClient.getSpotMarketAccount(
+		const spotMarket = this.velocityClient.getSpotMarketAccount(
 			vaultAccount.spotMarketIndex
 		);
 		if (!spotMarket) {
 			throw new Error(
-				`Spot market ${vaultAccount.spotMarketIndex} not found on driftClient`
+				`Spot market ${vaultAccount.spotMarketIndex} not found on velocityClient`
 			);
 		}
 
 		const userStatsKey = getUserStatsAccountPublicKey(
-			this.driftClient.program.programId,
+			this.velocityClient.program.programId,
 			vault
 		);
 		const userStats = (await (
-			this.driftClient.program as any
+			this.velocityClient.program as any
 		).account.userStats.fetch(userStatsKey)) as UserStatsAccount;
 		const remainingAccounts = this.getRemainingAccountsForUser(
 			[user.getUserAccount()],
@@ -1682,13 +1688,13 @@ export class VaultClient {
 		const accounts = {
 			vault,
 			tokenizedVaultDepositor,
-			driftUser: await getUserAccountPublicKey(
-				this.driftClient.program.programId,
+			velocityUser: await getUserAccountPublicKey(
+				this.velocityClient.program.programId,
 				vault
 			),
-			driftState: await this.driftClient.getStatePublicKey(),
-			driftSigner: this.driftClient.getStateAccount().signer,
-			driftProgram: this.driftClient.program.programId,
+			velocityState: await this.velocityClient.getStatePublicKey(),
+			velocitySigner: this.velocityClient.getStateAccount().signer,
+			velocityProgram: this.velocityClient.program.programId,
 		};
 
 		return this.program.instruction.applyRebaseTokenizedDepositor({
@@ -1716,21 +1722,21 @@ export class VaultClient {
 
 		const user = await this.getSubscribedVaultUser(vaultAccount.user);
 
-		const spotMarket = this.driftClient.getSpotMarketAccount(
+		const spotMarket = this.velocityClient.getSpotMarketAccount(
 			vaultAccount.spotMarketIndex
 		);
 		if (!spotMarket) {
 			throw new Error(
-				`Spot market ${vaultAccount.spotMarketIndex} not found on driftClient`
+				`Spot market ${vaultAccount.spotMarketIndex} not found on velocityClient`
 			);
 		}
 
 		const userStatsKey = getUserStatsAccountPublicKey(
-			this.driftClient.program.programId,
+			this.velocityClient.program.programId,
 			vault
 		);
 		const userStats = (await (
-			this.driftClient.program as any
+			this.velocityClient.program as any
 		).account.userStats.fetch(userStatsKey)) as UserStatsAccount;
 		const remainingAccounts = this.getRemainingAccountsForUser(
 			[user.getUserAccount()],
@@ -1745,13 +1751,13 @@ export class VaultClient {
 		const accounts = {
 			vault,
 			vaultDepositor,
-			driftUser: await getUserAccountPublicKey(
-				this.driftClient.program.programId,
+			velocityUser: await getUserAccountPublicKey(
+				this.velocityClient.program.programId,
 				vault
 			),
-			driftState: await this.driftClient.getStatePublicKey(),
-			driftSigner: this.driftClient.getStateAccount().signer,
-			driftProgram: this.driftClient.program.programId,
+			velocityState: await this.velocityClient.getStatePublicKey(),
+			velocitySigner: this.velocityClient.getStateAccount().signer,
+			velocityProgram: this.velocityClient.program.programId,
 		};
 
 		return this.program.instruction.applyRebase({
@@ -1782,19 +1788,19 @@ export class VaultClient {
 		const vaultDepositor = getVaultDepositorAddressSync(
 			this.program.programId,
 			vault,
-			authority || this.driftClient.wallet.publicKey
+			authority || this.velocityClient.wallet.publicKey
 		);
 
 		const accounts = {
 			vaultDepositor,
 			vault,
-			authority: authority || this.driftClient.wallet.publicKey,
+			authority: authority || this.velocityClient.wallet.publicKey,
 		};
 
 		const initIx = this.program.instruction.initializeVaultDepositor({
 			accounts: {
 				...accounts,
-				payer: payer || authority || this.driftClient.wallet.publicKey,
+				payer: payer || authority || this.velocityClient.wallet.publicKey,
 				rent: SYSVAR_RENT_PUBKEY,
 				systemProgram: SystemProgram.programId,
 			},
@@ -1840,12 +1846,12 @@ export class VaultClient {
 		let sharesBase = 0;
 		if (params.decimals === undefined || params.sharesBase === undefined) {
 			const vault = await this.program.account.vault.fetch(params.vault);
-			const spotMarketAccount = this.driftClient.getSpotMarketAccount(
+			const spotMarketAccount = this.velocityClient.getSpotMarketAccount(
 				vault.spotMarketIndex
 			);
 			if (!spotMarketAccount) {
 				throw new Error(
-					`DriftClient failed to load vault's spot market (marketIndex: ${vault.spotMarketIndex})`
+					`VelocityClient failed to load vault's spot market (marketIndex: ${vault.spotMarketIndex})`
 				);
 			}
 			spotMarketDecimals = spotMarketAccount.decimals;
@@ -1924,21 +1930,21 @@ export class VaultClient {
 
 		const userAta = getAssociatedTokenAddressSync(
 			mint,
-			this.driftClient.wallet.publicKey,
+			this.velocityClient.wallet.publicKey,
 			true
 		);
 
 		const ixs: TransactionInstruction[] = [];
 
-		const userAtaExists = await this.driftClient.connection.getAccountInfo(
+		const userAtaExists = await this.velocityClient.connection.getAccountInfo(
 			userAta
 		);
 		if (userAtaExists === null) {
 			ixs.push(
 				createAssociatedTokenAccountInstruction(
-					this.driftClient.wallet.publicKey,
+					this.velocityClient.wallet.publicKey,
 					userAta,
-					this.driftClient.wallet.publicKey,
+					this.velocityClient.wallet.publicKey,
 					mint
 				)
 			);
@@ -1946,11 +1952,11 @@ export class VaultClient {
 
 		const user = await this.getSubscribedVaultUser(vaultAccount.user);
 		const userStatsKey = getUserStatsAccountPublicKey(
-			this.driftClient.program.programId,
+			this.velocityClient.program.programId,
 			vaultDepositorAccount.vault
 		);
 		const userStats = (await (
-			this.driftClient.program as any
+			this.velocityClient.program as any
 		).account.userStats.fetch(userStatsKey)) as UserStatsAccount;
 		const remainingAccounts = this.getRemainingAccountsForUser(
 			[user.getUserAccount()],
@@ -1971,7 +1977,7 @@ export class VaultClient {
 				// generator can't encode `vault.shares_base.to_string().as_bytes()`
 				// and emits broken seeds. Pass it explicitly to override.
 				.accountsPartial({
-					authority: this.driftClient.wallet.publicKey,
+					authority: this.velocityClient.wallet.publicKey,
 					vault: vaultDepositorAccount.vault,
 					tokenizedVaultDepositor: getTokenizedVaultAddressSync(
 						this.program.programId,
@@ -1980,7 +1986,7 @@ export class VaultClient {
 					),
 					mint,
 					userTokenAccount: userAta,
-					driftUser: vaultAccount.user,
+					velocityUser: vaultAccount.user,
 				})
 				.remainingAccounts(remainingAccounts)
 				.instruction()
@@ -2019,11 +2025,11 @@ export class VaultClient {
 
 		const user = await this.getSubscribedVaultUser(vaultAccount.user);
 		const userStatsKey = getUserStatsAccountPublicKey(
-			this.driftClient.program.programId,
+			this.velocityClient.program.programId,
 			vaultDepositorAccount.vault
 		);
 		const userStats = (await (
-			this.driftClient.program as any
+			this.velocityClient.program as any
 		).account.userStats.fetch(userStatsKey)) as UserStatsAccount;
 		const remainingAccounts = this.getRemainingAccountsForUser(
 			[user.getUserAccount()],
@@ -2043,9 +2049,9 @@ export class VaultClient {
 				.transferVaultDepositorShares(amount, withdrawUnit)
 				.accounts({
 					vault: vaultDepositorAccount.vault,
-					authority: this.driftClient.wallet.publicKey,
+					authority: this.velocityClient.wallet.publicKey,
 					toVaultDepositor,
-					driftUser: vaultAccount.user,
+					velocityUser: vaultAccount.user,
 				})
 				.remainingAccounts(remainingAccounts)
 				.instruction()
@@ -2089,7 +2095,7 @@ export class VaultClient {
 
 		const userAta = getAssociatedTokenAddressSync(
 			mint,
-			this.driftClient.wallet.publicKey,
+			this.velocityClient.wallet.publicKey,
 			true
 		);
 
@@ -2101,11 +2107,11 @@ export class VaultClient {
 
 		const user = await this.getSubscribedVaultUser(vaultAccount.user);
 		const userStatsKey = getUserStatsAccountPublicKey(
-			this.driftClient.program.programId,
+			this.velocityClient.program.programId,
 			vaultDepositorAccount.vault
 		);
 		const userStats = (await (
-			this.driftClient.program as any
+			this.velocityClient.program as any
 		).account.userStats.fetch(userStatsKey)) as UserStatsAccount;
 		const remainingAccounts = this.getRemainingAccountsForUser(
 			[user.getUserAccount()],
@@ -2120,7 +2126,7 @@ export class VaultClient {
 		return await this.program.methods
 			.redeemTokens(tokensToBurn)
 			.accounts({
-				authority: this.driftClient.wallet.publicKey,
+				authority: this.velocityClient.wallet.publicKey,
 				vault: vaultDepositorAccount.vault,
 				tokenizedVaultDepositor: getTokenizedVaultAddressSync(
 					this.program.programId,
@@ -2130,7 +2136,7 @@ export class VaultClient {
 				mint,
 				userTokenAccount: userAta,
 				vaultTokenAccount: vaultTokenAta,
-				driftUser: vaultAccount.user,
+				velocityUser: vaultAccount.user,
 			})
 			.remainingAccounts(remainingAccounts)
 			.instruction();
@@ -2180,11 +2186,11 @@ export class VaultClient {
 
 		const user = await this.getSubscribedVaultUser(vaultAccount.user);
 		const userStatsKey = getUserStatsAccountPublicKey(
-			this.driftClient.program.programId,
+			this.velocityClient.program.programId,
 			vaultPubKey
 		);
 		const userStats = (await (
-			this.driftClient.program as any
+			this.velocityClient.program as any
 		).account.userStats.fetch(userStatsKey)) as UserStatsAccount;
 		const remainingAccounts = this.getRemainingAccountsForUser(
 			[user.getUserAccount()],
@@ -2196,14 +2202,14 @@ export class VaultClient {
 			false
 		);
 
-		const driftStateKey = await this.driftClient.getStatePublicKey();
+		const velocityStateKey = await this.velocityClient.getStatePublicKey();
 
-		const spotMarket = this.driftClient.getSpotMarketAccount(
+		const spotMarket = this.velocityClient.getSpotMarketAccount(
 			vaultAccount.spotMarketIndex
 		);
 		if (!spotMarket) {
 			throw new Error(
-				`Spot market ${vaultAccount.spotMarketIndex} not found on driftClient`
+				`Spot market ${vaultAccount.spotMarketIndex} not found on velocityClient`
 			);
 		}
 
@@ -2211,7 +2217,7 @@ export class VaultClient {
 			depositTokenAccount ??
 			getAssociatedTokenAddressSync(
 				spotMarket.mint,
-				this.driftClient.wallet.publicKey,
+				this.velocityClient.wallet.publicKey,
 				true
 			);
 
@@ -2225,12 +2231,12 @@ export class VaultClient {
 			vault: vaultPubKey,
 			vaultDepositor,
 			vaultTokenAccount: vaultAccount.tokenAccount,
-			driftUserStats: userStatsKey,
-			driftUser: vaultAccount.user,
-			driftState: driftStateKey,
-			driftSpotMarketVault: spotMarket.vault,
+			velocityUserStats: userStatsKey,
+			velocityUser: vaultAccount.user,
+			velocityState: velocityStateKey,
+			velocitySpotMarketVault: spotMarket.vault,
 			userTokenAccount: userTokenAccount,
-			driftProgram: this.driftClient.program.programId,
+			velocityProgram: this.velocityClient.program.programId,
 			tokenProgram: TOKEN_PROGRAM_ID,
 		};
 
@@ -2284,7 +2290,7 @@ export class VaultClient {
 		const depositIx = await this.program.methods
 			.deposit(amount)
 			.accounts({
-				authority: this.driftClient.wallet.publicKey,
+				authority: this.velocityClient.wallet.publicKey,
 				...accounts,
 			})
 			.remainingAccounts(remainingAccounts)
@@ -2358,11 +2364,11 @@ export class VaultClient {
 
 		const user = await this.getSubscribedVaultUser(vaultAccount.user);
 		const userStatsKey = getUserStatsAccountPublicKey(
-			this.driftClient.program.programId,
+			this.velocityClient.program.programId,
 			vaultDepositorAccount.vault
 		);
 		const userStats = (await (
-			this.driftClient.program as any
+			this.velocityClient.program as any
 		).account.userStats.fetch(userStatsKey)) as UserStatsAccount;
 		const remainingAccounts = this.getRemainingAccountsForUser(
 			[user.getUserAccount()],
@@ -2377,8 +2383,8 @@ export class VaultClient {
 		const accounts = {
 			vault: vaultDepositorAccount.vault,
 			vaultDepositor,
-			driftUser: vaultAccount.user,
-			driftUserStats: userStatsKey,
+			velocityUser: vaultAccount.user,
+			velocityUserStats: userStatsKey,
 		};
 
 		const oracleFeedsToCrankIxs = await this.getOracleFeedsToCrankIxs(
@@ -2391,7 +2397,7 @@ export class VaultClient {
 			withdrawUnit,
 			{
 				accounts: {
-					authority: this.driftClient.wallet.publicKey,
+					authority: this.velocityClient.wallet.publicKey,
 					...accounts,
 				},
 				remainingAccounts,
@@ -2427,11 +2433,11 @@ export class VaultClient {
 
 		const user = await this.getSubscribedVaultUser(vaultAccount.user);
 		const userStatsKey = getUserStatsAccountPublicKey(
-			this.driftClient.program.programId,
+			this.velocityClient.program.programId,
 			vaultDepositorAccount.vault
 		);
 		const userStats = (await (
-			this.driftClient.program as any
+			this.velocityClient.program as any
 		).account.userStats.fetch(userStatsKey)) as UserStatsAccount;
 		const remainingAccounts = this.getRemainingAccountsForUser(
 			[user.getUserAccount()],
@@ -2443,14 +2449,14 @@ export class VaultClient {
 			false
 		);
 
-		const driftStateKey = await this.driftClient.getStatePublicKey();
+		const velocityStateKey = await this.velocityClient.getStatePublicKey();
 
-		const spotMarket = this.driftClient.getSpotMarketAccount(
+		const spotMarket = this.velocityClient.getSpotMarketAccount(
 			vaultAccount.spotMarketIndex
 		);
 		if (!spotMarket) {
 			throw new Error(
-				`Spot market ${vaultAccount.spotMarketIndex} not found on driftClient`
+				`Spot market ${vaultAccount.spotMarketIndex} not found on velocityClient`
 			);
 		}
 
@@ -2459,7 +2465,7 @@ export class VaultClient {
 		// let createAtaIx: TransactionInstruction | undefined = undefined;
 		let userAta = getAssociatedTokenAddressSync(
 			spotMarket.mint,
-			this.driftClient.wallet.publicKey,
+			this.velocityClient.wallet.publicKey,
 			true
 		);
 
@@ -2468,7 +2474,7 @@ export class VaultClient {
 
 		if (isSolMarket) {
 			const { ixs, pubkey } =
-				await this.driftClient.getWrappedSolAccountCreationIxs(ZERO, false);
+				await this.velocityClient.getWrappedSolAccountCreationIxs(ZERO, false);
 
 			userAta = pubkey;
 			preIxs.push(...ixs);
@@ -2476,21 +2482,21 @@ export class VaultClient {
 			postIxs.push(
 				createCloseAccountInstruction(
 					userAta,
-					this.driftClient.wallet.publicKey,
-					this.driftClient.wallet.publicKey,
+					this.velocityClient.wallet.publicKey,
+					this.velocityClient.wallet.publicKey,
 					[]
 				)
 			);
 		} else {
-			const userAtaExists = await this.driftClient.connection.getAccountInfo(
+			const userAtaExists = await this.velocityClient.connection.getAccountInfo(
 				userAta
 			);
 			if (userAtaExists === null) {
 				preIxs.push(
 					createAssociatedTokenAccountInstruction(
-						this.driftClient.wallet.publicKey,
+						this.velocityClient.wallet.publicKey,
 						userAta,
-						this.driftClient.wallet.publicKey,
+						this.velocityClient.wallet.publicKey,
 						spotMarket.mint
 					)
 				);
@@ -2501,13 +2507,13 @@ export class VaultClient {
 			vault: vaultDepositorAccount.vault,
 			vaultDepositor,
 			vaultTokenAccount: vaultAccount.tokenAccount,
-			driftUserStats: userStatsKey,
-			driftUser: vaultAccount.user,
-			driftState: driftStateKey,
-			driftSpotMarketVault: spotMarket.vault,
-			driftSigner: this.driftClient.getStateAccount().signer,
+			velocityUserStats: userStatsKey,
+			velocityUser: vaultAccount.user,
+			velocityState: velocityStateKey,
+			velocitySpotMarketVault: spotMarket.vault,
+			velocitySigner: this.velocityClient.getStateAccount().signer,
 			userTokenAccount: userAta,
-			driftProgram: this.driftClient.program.programId,
+			velocityProgram: this.velocityClient.program.programId,
 			tokenProgram: TOKEN_PROGRAM_ID,
 		};
 
@@ -2521,7 +2527,7 @@ export class VaultClient {
 			await this.program.methods
 				.withdraw()
 				.accounts({
-					authority: this.driftClient.wallet.publicKey,
+					authority: this.velocityClient.wallet.publicKey,
 					...accounts,
 				})
 				.remainingAccounts(remainingAccounts)
@@ -2551,11 +2557,11 @@ export class VaultClient {
 
 		const user = await this.getSubscribedVaultUser(vaultAccount.user);
 		const userStatsKey = getUserStatsAccountPublicKey(
-			this.driftClient.program.programId,
+			this.velocityClient.program.programId,
 			vaultDepositorAccount.vault
 		);
 		const userStats = (await (
-			this.driftClient.program as any
+			this.velocityClient.program as any
 		).account.userStats.fetch(userStatsKey)) as UserStatsAccount;
 		const remainingAccounts = this.getRemainingAccountsForUser(
 			[user.getUserAccount()],
@@ -2577,23 +2583,23 @@ export class VaultClient {
 			});
 		}
 
-		const driftStateKey = await this.driftClient.getStatePublicKey();
+		const velocityStateKey = await this.velocityClient.getStatePublicKey();
 
-		const spotMarket = this.driftClient.getSpotMarketAccount(
+		const spotMarket = this.velocityClient.getSpotMarketAccount(
 			vaultAccount.spotMarketIndex
 		);
 		if (!spotMarket) {
 			throw new Error(
-				`Spot market ${vaultAccount.spotMarketIndex} not found on driftClient`
+				`Spot market ${vaultAccount.spotMarketIndex} not found on velocityClient`
 			);
 		}
 
 		const [userTokenAccount, createAtaIx] = await getOrCreateATAInstruction(
 			spotMarket.mint,
 			vaultDepositorAccount.authority,
-			this.driftClient.connection,
+			this.velocityClient.connection,
 			true,
-			this.driftClient.wallet.publicKey
+			this.velocityClient.wallet.publicKey
 		);
 
 		if (createAtaIx) {
@@ -2607,13 +2613,13 @@ export class VaultClient {
 			vault: vaultDepositorAccount.vault,
 			vaultDepositor,
 			vaultTokenAccount: vaultAccount.tokenAccount,
-			driftUserStats: userStatsKey,
-			driftUser: vaultAccount.user,
-			driftState: driftStateKey,
-			driftSpotMarketVault: spotMarket.vault,
-			driftSigner: this.driftClient.getStateAccount().signer,
+			velocityUserStats: userStatsKey,
+			velocityUser: vaultAccount.user,
+			velocityState: velocityStateKey,
+			velocitySpotMarketVault: spotMarket.vault,
+			velocitySigner: this.velocityClient.getStateAccount().signer,
 			userTokenAccount,
-			driftProgram: this.driftClient.program.programId,
+			velocityProgram: this.velocityClient.program.programId,
 			tokenProgram: TOKEN_PROGRAM_ID,
 		};
 
@@ -2656,20 +2662,20 @@ export class VaultClient {
 		);
 
 		const userStatsKey = getUserStatsAccountPublicKey(
-			this.driftClient.program.programId,
+			this.velocityClient.program.programId,
 			vaultDepositorAccount.vault
 		);
 
 		const accounts = {
 			vault: vaultDepositorAccount.vault,
 			vaultDepositor,
-			driftUserStats: userStatsKey,
-			driftUser: vaultAccount.user,
+			velocityUserStats: userStatsKey,
+			velocityUser: vaultAccount.user,
 		};
 
 		const user = await this.getSubscribedVaultUser(vaultAccount.user);
 		const userStats = (await (
-			this.driftClient.program as any
+			this.velocityClient.program as any
 		).account.userStats.fetch(userStatsKey)) as UserStatsAccount;
 		const remainingAccounts = this.getRemainingAccountsForUser(
 			[user.getUserAccount()],
@@ -2697,7 +2703,7 @@ export class VaultClient {
 			const cancelRequestWithdrawIx =
 				this.program.instruction.cancelRequestWithdraw({
 					accounts: {
-						authority: this.driftClient.wallet.publicKey,
+						authority: this.velocityClient.wallet.publicKey,
 						...accounts,
 					},
 					remainingAccounts,
@@ -2724,7 +2730,7 @@ export class VaultClient {
 	public async getLiquidateIx(
 		vaultDepositor: PublicKey
 	): Promise<TransactionInstruction> {
-		if (!this.driftClient.wallet.publicKey.equals(VAULT_ADMIN_KEY)) {
+		if (!this.velocityClient.wallet.publicKey.equals(VAULT_ADMIN_KEY)) {
 			throw new Error('Only vault admin can liquidate');
 		}
 		const vaultDepositorAccount =
@@ -2735,11 +2741,11 @@ export class VaultClient {
 
 		const user = await this.getSubscribedVaultUser(vaultAccount.user);
 		const userStatsKey = getUserStatsAccountPublicKey(
-			this.driftClient.program.programId,
+			this.velocityClient.program.programId,
 			vault
 		);
 		const userStats = (await (
-			this.driftClient.program as any
+			this.velocityClient.program as any
 		).account.userStats.fetch(userStatsKey)) as UserStatsAccount;
 		const remainingAccounts = this.getRemainingAccountsForUser(
 			[user.getUserAccount()],
@@ -2751,16 +2757,16 @@ export class VaultClient {
 			true
 		);
 
-		const driftStateKey = await this.driftClient.getStatePublicKey();
+		const velocityStateKey = await this.velocityClient.getStatePublicKey();
 
 		const accounts = {
 			vault,
 			vaultDepositor,
 			vaultTokenAccount: vaultAccount.tokenAccount,
-			driftUserStats: userStatsKey,
-			driftUser: vaultAccount.user,
-			driftState: driftStateKey,
-			driftProgram: this.driftClient.program.programId,
+			velocityUserStats: userStatsKey,
+			velocityUser: vaultAccount.user,
+			velocityState: velocityStateKey,
+			velocityProgram: this.velocityClient.program.programId,
 			authority: vaultDepositorAccount.authority,
 		};
 
@@ -2774,7 +2780,7 @@ export class VaultClient {
 			return this.program.instruction.liquidate({
 				accounts: {
 					...accounts,
-					admin: this.driftClient.wallet.publicKey,
+					admin: this.velocityClient.wallet.publicKey,
 				},
 				remainingAccounts,
 			});
@@ -2798,15 +2804,17 @@ export class VaultClient {
 			...vaultIxs,
 		];
 
-		return (await this.driftClient.txHandler.buildTransaction({
-			connection: this.driftClient.connection,
+		return (await this.velocityClient.txHandler.buildTransaction({
+			connection: this.velocityClient.connection,
 			instructions: ixs,
 			lookupTables: txParams?.lookupTables ?? [],
 			preFlightCommitment: 'confirmed',
 			forceVersionedTransaction: true,
 			txVersion: 0,
 			fetchAllMarketLookupTableAccounts:
-				this.driftClient.fetchAllLookupTableAccounts.bind(this.driftClient),
+				this.velocityClient.fetchAllLookupTableAccounts.bind(
+					this.velocityClient
+				),
 		})) as VersionedTransaction;
 	}
 
@@ -2828,13 +2836,13 @@ export class VaultClient {
 		];
 
 		const recentBlockhash =
-			await this.driftClient.connection.getLatestBlockhash();
+			await this.velocityClient.connection.getLatestBlockhash();
 
-		return this.driftClient.txHandler.generateVersionedTransaction(
+		return this.velocityClient.txHandler.generateVersionedTransaction(
 			recentBlockhash,
 			ixs,
 			[],
-			this.driftClient.wallet
+			this.velocityClient.wallet
 		);
 	}
 
@@ -2845,11 +2853,11 @@ export class VaultClient {
 		let txSig = bs58.encode(transaction.signatures[0]);
 		if (simulateTransaction) {
 			try {
-				const resp = await this.driftClient.connection.simulateTransaction(
+				const resp = await this.velocityClient.connection.simulateTransaction(
 					transaction,
 					{
 						sigVerify: false,
-						commitment: this.driftClient.connection.commitment,
+						commitment: this.velocityClient.connection.commitment,
 					}
 				);
 				console.log(`Simulated transaction:\n${JSON.stringify(resp, null, 2)}`);
@@ -2860,10 +2868,10 @@ export class VaultClient {
 				);
 			}
 		} else {
-			const resp = await this.driftClient.sendTransaction(
+			const resp = await this.velocityClient.sendTransaction(
 				transaction,
 				[],
-				this.driftClient.opts
+				this.velocityClient.opts
 			);
 			if (resp.txSig !== txSig) {
 				txSig = resp.txSig;
@@ -2884,7 +2892,7 @@ export class VaultClient {
 		if (txParams?.noLut ? txParams.noLut : false) {
 			tx = await this.createTxnNoLut(vaultIxs, txParams);
 			// @ts-ignore
-			tx.sign([this.driftClient.wallet.payer]);
+			tx.sign([this.velocityClient.wallet.payer]);
 		} else {
 			tx = await this.createTxn(vaultIxs, txParams);
 		}
@@ -2918,15 +2926,16 @@ export class VaultClient {
 		const vaultAccount = await this.program.account.vault.fetch(vault);
 
 		const _ifStakeAccountPublicKey = getInsuranceFundStakeAccountPublicKey(
-			this.driftClient.program.programId,
+			this.velocityClient.program.programId,
 			vault,
 			spotMarketIndex
 		);
 
-		const spotMarket = this.driftClient.getSpotMarketAccount(spotMarketIndex);
+		const spotMarket =
+			this.velocityClient.getSpotMarketAccount(spotMarketIndex);
 		if (!spotMarket) {
 			throw new Error(
-				`Spot market ${spotMarketIndex} not found on driftClient`
+				`Spot market ${spotMarketIndex} not found on velocityClient`
 			);
 		}
 
@@ -2940,9 +2949,9 @@ export class VaultClient {
 			.initializeInsuranceFundStake(spotMarketIndex)
 			.accounts({
 				vault: vault,
-				driftSpotMarketMint: spotMarket.mint,
-				driftUserStats: vaultAccount.userStats,
-				driftState: await this.driftClient.getStatePublicKey(),
+				velocitySpotMarketMint: spotMarket.mint,
+				velocityUserStats: vaultAccount.userStats,
+				velocityState: await this.velocityClient.getStatePublicKey(),
 			})
 			.instruction();
 	}
@@ -2978,26 +2987,27 @@ export class VaultClient {
 	): Promise<TransactionInstruction> {
 		const vaultAccount = await this.program.account.vault.fetch(vault);
 
-		if (!vaultAccount.manager.equals(this.driftClient.wallet.publicKey)) {
+		if (!vaultAccount.manager.equals(this.velocityClient.wallet.publicKey)) {
 			throw new Error(
 				`Only the manager of the vault can add to the insurance fund stake.`
 			);
 		}
 
 		const _ifStakeAccountPublicKey = getInsuranceFundStakeAccountPublicKey(
-			this.driftClient.program.programId,
+			this.velocityClient.program.programId,
 			vault,
 			spotMarketIndex
 		);
 		const _ifVaultPublicKey = await getInsuranceFundVaultPublicKey(
-			this.driftClient.program.programId,
+			this.velocityClient.program.programId,
 			spotMarketIndex
 		);
 
-		const spotMarket = this.driftClient.getSpotMarketAccount(spotMarketIndex);
+		const spotMarket =
+			this.velocityClient.getSpotMarketAccount(spotMarketIndex);
 		if (!spotMarket) {
 			throw new Error(
-				`Spot market ${spotMarketIndex} not found on driftClient`
+				`Spot market ${spotMarketIndex} not found on velocityClient`
 			);
 		}
 
@@ -3020,9 +3030,9 @@ export class VaultClient {
 			.accounts({
 				vault: vault,
 				managerTokenAccount,
-				driftUserStats: vaultAccount.userStats,
-				driftState: await this.driftClient.getStatePublicKey(),
-				driftSigner: this.driftClient.getStateAccount().signer,
+				velocityUserStats: vaultAccount.userStats,
+				velocityState: await this.velocityClient.getStatePublicKey(),
+				velocitySigner: this.velocityClient.getStateAccount().signer,
 			})
 			.instruction();
 	}
@@ -3048,19 +3058,20 @@ export class VaultClient {
 	): Promise<TransactionInstruction> {
 		const vaultAccount = await this.program.account.vault.fetch(vault);
 		const _ifStakeAccountPublicKey = getInsuranceFundStakeAccountPublicKey(
-			this.driftClient.program.programId,
+			this.velocityClient.program.programId,
 			vault,
 			spotMarketIndex
 		);
 		const _ifVaultPublicKey = await getInsuranceFundVaultPublicKey(
-			this.driftClient.program.programId,
+			this.velocityClient.program.programId,
 			spotMarketIndex
 		);
 
-		const spotMarket = this.driftClient.getSpotMarketAccount(spotMarketIndex);
+		const spotMarket =
+			this.velocityClient.getSpotMarketAccount(spotMarketIndex);
 		if (!spotMarket) {
 			throw new Error(
-				`Spot market ${spotMarketIndex} not found on driftClient`
+				`Spot market ${spotMarketIndex} not found on velocityClient`
 			);
 		}
 
@@ -3069,7 +3080,7 @@ export class VaultClient {
 			.accounts({
 				vault,
 				manager: vaultAccount.manager,
-				driftUserStats: vaultAccount.userStats,
+				velocityUserStats: vaultAccount.userStats,
 			})
 			.instruction();
 	}
@@ -3092,18 +3103,19 @@ export class VaultClient {
 	): Promise<TransactionInstruction> {
 		const vaultAccount = await this.program.account.vault.fetch(vault);
 		const _ifStakeAccountPublicKey = getInsuranceFundStakeAccountPublicKey(
-			this.driftClient.program.programId,
+			this.velocityClient.program.programId,
 			vault,
 			spotMarketIndex
 		);
 		const _ifVaultPublicKey = await getInsuranceFundVaultPublicKey(
-			this.driftClient.program.programId,
+			this.velocityClient.program.programId,
 			spotMarketIndex
 		);
-		const spotMarket = this.driftClient.getSpotMarketAccount(spotMarketIndex);
+		const spotMarket =
+			this.velocityClient.getSpotMarketAccount(spotMarketIndex);
 		if (!spotMarket) {
 			throw new Error(
-				`Spot market ${spotMarketIndex} not found on driftClient`
+				`Spot market ${spotMarketIndex} not found on velocityClient`
 			);
 		}
 
@@ -3112,7 +3124,7 @@ export class VaultClient {
 			.accounts({
 				vault: vault,
 				manager: vaultAccount.manager,
-				driftUserStats: vaultAccount.userStats,
+				velocityUserStats: vaultAccount.userStats,
 			})
 			.instruction();
 	}
@@ -3138,18 +3150,19 @@ export class VaultClient {
 	): Promise<TransactionInstruction> {
 		const vaultAccount = await this.program.account.vault.fetch(vault);
 		const _ifStakeAccountPublicKey = getInsuranceFundStakeAccountPublicKey(
-			this.driftClient.program.programId,
+			this.velocityClient.program.programId,
 			vault,
 			spotMarketIndex
 		);
 		const _ifVaultPublicKey = await getInsuranceFundVaultPublicKey(
-			this.driftClient.program.programId,
+			this.velocityClient.program.programId,
 			spotMarketIndex
 		);
-		const spotMarket = this.driftClient.getSpotMarketAccount(spotMarketIndex);
+		const spotMarket =
+			this.velocityClient.getSpotMarketAccount(spotMarketIndex);
 		if (!spotMarket) {
 			throw new Error(
-				`Spot market ${spotMarketIndex} not found on driftClient`
+				`Spot market ${spotMarketIndex} not found on velocityClient`
 			);
 		}
 
@@ -3172,9 +3185,9 @@ export class VaultClient {
 			.accounts({
 				vault: vault,
 				managerTokenAccount,
-				driftState: await this.driftClient.getStatePublicKey(),
-				driftUserStats: vaultAccount.userStats,
-				driftSigner: this.driftClient.getStateAccount().signer,
+				velocityState: await this.velocityClient.getStatePublicKey(),
+				velocityUserStats: vaultAccount.userStats,
+				velocitySigner: this.velocityClient.getStateAccount().signer,
 			})
 			.instruction();
 	}
@@ -3207,17 +3220,17 @@ export class VaultClient {
 			vp
 		)) as VaultProtocol;
 
-		if (!this.driftClient.wallet.publicKey.equals(vpAccount.protocol)) {
+		if (!this.velocityClient.wallet.publicKey.equals(vpAccount.protocol)) {
 			throw new Error(`Only the protocol of the vault can request a withdraw.`);
 		}
 
 		const user = await this.getSubscribedVaultUser(vaultAccount.user);
 		const userStatsKey = getUserStatsAccountPublicKey(
-			this.driftClient.program.programId,
+			this.velocityClient.program.programId,
 			vault
 		);
 		const userStats = (await (
-			this.driftClient.program as any
+			this.velocityClient.program as any
 		).account.userStats.fetch(userStatsKey)) as UserStatsAccount;
 		const remainingAccounts = this.getRemainingAccountsForUser(
 			[user.getUserAccount()],
@@ -3231,8 +3244,8 @@ export class VaultClient {
 
 		const accounts = {
 			vault,
-			driftUserStats: userStatsKey,
-			driftUser: vaultAccount.user,
+			velocityUserStats: userStatsKey,
+			velocityUser: vaultAccount.user,
 		};
 
 		if (this.cliMode) {
@@ -3274,20 +3287,20 @@ export class VaultClient {
 		const vaultAccount = await this.program.account.vault.fetch(vault);
 
 		const userStatsKey = getUserStatsAccountPublicKey(
-			this.driftClient.program.programId,
+			this.velocityClient.program.programId,
 			vault
 		);
 
 		const accounts = {
 			manager: vaultAccount.manager,
 			vault,
-			driftUserStats: userStatsKey,
-			driftUser: vaultAccount.user,
+			velocityUserStats: userStatsKey,
+			velocityUser: vaultAccount.user,
 		};
 
 		const user = await this.getSubscribedVaultUser(vaultAccount.user);
 		const userStats = (await (
-			this.driftClient.program as any
+			this.velocityClient.program as any
 		).account.userStats.fetch(userStatsKey)) as UserStatsAccount;
 		const remainingAccounts = this.getRemainingAccountsForUser(
 			[user.getUserAccount()],
@@ -3334,17 +3347,17 @@ export class VaultClient {
 	): Promise<TransactionInstruction[]> {
 		const vaultAccount = await this.program.account.vault.fetch(vault);
 
-		if (!this.driftClient.wallet.publicKey.equals(vaultAccount.manager)) {
+		if (!this.velocityClient.wallet.publicKey.equals(vaultAccount.manager)) {
 			throw new Error(`Only the manager of the vault can request a withdraw.`);
 		}
 
 		const user = await this.getSubscribedVaultUser(vaultAccount.user);
 		const userStatsKey = getUserStatsAccountPublicKey(
-			this.driftClient.program.programId,
+			this.velocityClient.program.programId,
 			vault
 		);
 		const userStats = (await (
-			this.driftClient.program as any
+			this.velocityClient.program as any
 		).account.userStats.fetch(userStatsKey)) as UserStatsAccount;
 		const remainingAccounts = this.getRemainingAccountsForUser(
 			[user.getUserAccount()],
@@ -3356,12 +3369,12 @@ export class VaultClient {
 			true
 		);
 
-		const spotMarket = this.driftClient.getSpotMarketAccount(
+		const spotMarket = this.velocityClient.getSpotMarketAccount(
 			vaultAccount.spotMarketIndex
 		);
 		if (!spotMarket) {
 			throw new Error(
-				`Spot market ${vaultAccount.spotMarketIndex} not found on driftClient`
+				`Spot market ${vaultAccount.spotMarketIndex} not found on velocityClient`
 			);
 		}
 
@@ -3370,19 +3383,19 @@ export class VaultClient {
 				vault,
 				manager: vaultAccount.manager,
 				vaultTokenAccount: vaultAccount.tokenAccount,
-				driftUser: await getUserAccountPublicKey(
-					this.driftClient.program.programId,
+				velocityUser: await getUserAccountPublicKey(
+					this.velocityClient.program.programId,
 					vault
 				),
-				driftProgram: this.driftClient.program.programId,
-				driftUserStats: userStatsKey,
-				driftState: await this.driftClient.getStatePublicKey(),
-				driftSpotMarketVault: spotMarket.vault,
+				velocityProgram: this.velocityClient.program.programId,
+				velocityUserStats: userStatsKey,
+				velocityState: await this.velocityClient.getStatePublicKey(),
+				velocitySpotMarketVault: spotMarket.vault,
 				userTokenAccount: getAssociatedTokenAddressSync(
 					spotMarket.mint,
-					this.driftClient.wallet.publicKey
+					this.velocityClient.wallet.publicKey
 				),
-				driftSigner: this.driftClient.getStateAccount().signer,
+				velocitySigner: this.velocityClient.getStateAccount().signer,
 				tokenProgram: TOKEN_PROGRAM_ID,
 			},
 			remainingAccounts,
@@ -3432,7 +3445,7 @@ export class VaultClient {
 			const pythLazerMsgHex = await pythLazerMsgHexGetter(pythLazerFeedIds);
 
 			const oracleUpdateIxs =
-				await this.driftClient.getPostPythLazerOracleUpdateIxs(
+				await this.velocityClient.getPostPythLazerOracleUpdateIxs(
 					pythLazerFeedIds,
 					pythLazerMsgHex,
 					undefined,
@@ -3503,7 +3516,7 @@ export class VaultClient {
 		return this.program.instruction.adminInitFeeUpdate({
 			accounts: {
 				vault,
-				admin: this.driftClient.wallet.publicKey,
+				admin: this.velocityClient.wallet.publicKey,
 				feeUpdate,
 				systemProgram: SystemProgram.programId,
 			},
@@ -3526,7 +3539,7 @@ export class VaultClient {
 		return this.program.instruction.adminDeleteFeeUpdate({
 			accounts: {
 				vault,
-				admin: this.driftClient.wallet.publicKey,
+				admin: this.velocityClient.wallet.publicKey,
 				feeUpdate,
 			},
 		});
@@ -3549,7 +3562,7 @@ export class VaultClient {
 			.adminUpdateVaultClass(newVaultClass as any)
 			.accounts({
 				vault,
-				admin: this.driftClient.wallet.publicKey,
+				admin: this.velocityClient.wallet.publicKey,
 			})
 			.instruction();
 	}
@@ -3640,7 +3653,7 @@ export class VaultClient {
 				throw new Error('Must supply address or vault');
 			}
 
-			const spotMarket = this.driftClient.getSpotMarketAccount(
+			const spotMarket = this.velocityClient.getSpotMarketAccount(
 				vaultAccount.spotMarketIndex
 			);
 			spotPrecisionExp = new BN(spotMarket!.decimals);

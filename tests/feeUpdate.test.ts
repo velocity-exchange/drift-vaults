@@ -11,7 +11,7 @@ import {
 	getVaultAddressSync,
 	getVaultDepositorAddressSync,
 	encodeName,
-	DriftVaults,
+	VelocityVaults,
 	VAULT_PROGRAM_ID,
 	IDL,
 	FeeUpdateStatus,
@@ -19,8 +19,8 @@ import {
 } from '../ts/sdk/lib';
 import {
 	BulkAccountLoader,
-	DRIFT_PROGRAM_ID,
-	DriftClient,
+	VELOCITY_PROGRAM_ID,
+	VelocityClient,
 	getVariant,
 	OracleSource,
 	PEG_PRECISION,
@@ -56,9 +56,9 @@ const ONE_DAY_S = new BN(86400);
 const ONE_WEEK_S = ONE_DAY_S.muln(7);
 
 describe('feeUpdate', () => {
-	let vaultProgram: Program<DriftVaults>;
+	let vaultProgram: Program<VelocityVaults>;
 	const initialSolPerpPrice = 100;
-	let adminDriftClient: TestClient;
+	let adminVelocityClient: TestClient;
 	let bulkAccountLoader: TestBulkAccountLoader;
 	let bankrunContextWrapper: BankrunContextWrapper;
 	let usdcMint: PublicKey;
@@ -72,28 +72,28 @@ describe('feeUpdate', () => {
 
 	const managerSigner = Keypair.generate();
 	let managerClient: VaultClient;
-	let managerDriftClient: DriftClient;
+	let managerVelocityClient: VelocityClient;
 
 	let adminClient: VaultClient;
 
 	const user1Signer = Keypair.generate();
 	let user1Client: VaultClient;
-	let user1DriftClient: DriftClient;
+	let user1VelocityClient: VelocityClient;
 
 	const user2Signer = Keypair.generate();
 	let user2Client: VaultClient;
-	let user2DriftClient: DriftClient;
+	let user2VelocityClient: VelocityClient;
 
 	const user3Signer = Keypair.generate();
 	let user3Client: VaultClient;
-	let user3DriftClient: DriftClient;
+	let user3VelocityClient: VelocityClient;
 
 	beforeEach(async () => {
 		const context = await startAnchor(
 			'',
 			[
 				{
-					name: 'drift',
+					name: 'velocity',
 					programId: new PublicKey(
 						'vELoC1audYbSYVRXn1vPaV8Axoa9oU6BYmNGZZBDZ1P'
 					),
@@ -105,7 +105,7 @@ describe('feeUpdate', () => {
 		// wrap the context to use it with the test helpers
 		bankrunContextWrapper = new BankrunContextWrapper(context);
 
-		vaultProgram = new Program<DriftVaults>(
+		vaultProgram = new Program<VelocityVaults>(
 			IDL,
 			bankrunContextWrapper.provider
 		);
@@ -133,10 +133,10 @@ describe('feeUpdate', () => {
 			100 * LAMPORTS_PER_SOL
 		);
 
-		adminDriftClient = new TestClient({
+		adminVelocityClient = new TestClient({
 			connection: bankrunContextWrapper.connection.toConnection(),
 			wallet: adminWallet,
-			programID: new PublicKey(DRIFT_PROGRAM_ID),
+			programID: new PublicKey(VELOCITY_PROGRAM_ID),
 			opts: {
 				commitment: 'confirmed',
 			},
@@ -151,13 +151,13 @@ describe('feeUpdate', () => {
 			},
 		});
 
-		await adminDriftClient.initialize(usdcMint, true);
-		await adminDriftClient.subscribe();
+		await adminVelocityClient.initialize(usdcMint, true);
+		await adminVelocityClient.subscribe();
 
-		await initializeQuoteSpotMarket(adminDriftClient, usdcMint);
-		await initializeSolSpotMarket(adminDriftClient, solPerpOracle);
+		await initializeQuoteSpotMarket(adminVelocityClient, usdcMint);
+		await initializeSolSpotMarket(adminVelocityClient, solPerpOracle);
 
-		await adminDriftClient.initializePerpMarket(
+		await adminVelocityClient.initializePerpMarket(
 			0,
 			solPerpOracle,
 			ammInitialBaseAssetReserve,
@@ -167,7 +167,7 @@ describe('feeUpdate', () => {
 			OracleSource.PYTH
 		);
 
-		await adminDriftClient.fetchAccounts();
+		await adminVelocityClient.fetchAccounts();
 
 		const managerBootstrap = await bootstrapSignerClientAndUserBankrun({
 			bankrunContext: bankrunContextWrapper,
@@ -176,7 +176,7 @@ describe('feeUpdate', () => {
 			usdcMint: usdcMint,
 			usdcAmount,
 			vaultClientCliMode: true,
-			driftClientConfig: {
+			velocityClientConfig: {
 				accountSubscription: {
 					type: 'polling',
 					accountLoader: bulkAccountLoader as BulkAccountLoader,
@@ -189,15 +189,15 @@ describe('feeUpdate', () => {
 			},
 		});
 		managerClient = managerBootstrap.vaultClient;
-		managerDriftClient = managerBootstrap.driftClient;
+		managerVelocityClient = managerBootstrap.velocityClient;
 
 		const provider = new BankrunProvider(
 			bankrunContextWrapper.context,
-			adminDriftClient.wallet as anchor.Wallet
+			adminVelocityClient.wallet as anchor.Wallet
 		);
 		const program = new Program(IDL, provider);
 		adminClient = new VaultClient({
-			driftClient: adminDriftClient,
+			velocityClient: adminVelocityClient,
 			// @ts-ignore
 			program,
 		});
@@ -209,7 +209,7 @@ describe('feeUpdate', () => {
 			usdcMint: usdcMint,
 			usdcAmount,
 			vaultClientCliMode: true,
-			driftClientConfig: {
+			velocityClientConfig: {
 				accountSubscription: {
 					type: 'polling',
 					accountLoader: bulkAccountLoader as BulkAccountLoader,
@@ -222,7 +222,7 @@ describe('feeUpdate', () => {
 			},
 		});
 		user1Client = user1Bootstrap.vaultClient;
-		user1DriftClient = user1Bootstrap.driftClient;
+		user1VelocityClient = user1Bootstrap.velocityClient;
 
 		const user2Bootstrap = await bootstrapSignerClientAndUserBankrun({
 			bankrunContext: bankrunContextWrapper,
@@ -231,7 +231,7 @@ describe('feeUpdate', () => {
 			usdcMint: usdcMint,
 			usdcAmount,
 			vaultClientCliMode: true,
-			driftClientConfig: {
+			velocityClientConfig: {
 				accountSubscription: {
 					type: 'polling',
 					accountLoader: bulkAccountLoader as BulkAccountLoader,
@@ -244,7 +244,7 @@ describe('feeUpdate', () => {
 			},
 		});
 		user2Client = user2Bootstrap.vaultClient;
-		user2DriftClient = user2Bootstrap.driftClient;
+		user2VelocityClient = user2Bootstrap.velocityClient;
 
 		const user3Bootstrap = await bootstrapSignerClientAndUserBankrun({
 			bankrunContext: bankrunContextWrapper,
@@ -253,7 +253,7 @@ describe('feeUpdate', () => {
 			usdcMint: usdcMint,
 			usdcAmount,
 			vaultClientCliMode: true,
-			driftClientConfig: {
+			velocityClientConfig: {
 				accountSubscription: {
 					type: 'polling',
 					accountLoader: bulkAccountLoader as BulkAccountLoader,
@@ -266,7 +266,7 @@ describe('feeUpdate', () => {
 			},
 		});
 		user3Client = user3Bootstrap.vaultClient;
-		user3DriftClient = user3Bootstrap.driftClient;
+		user3VelocityClient = user3Bootstrap.velocityClient;
 
 		// initialize a vault and depositors
 		await managerClient.initializeVault(
@@ -298,16 +298,16 @@ describe('feeUpdate', () => {
 	});
 
 	afterEach(async () => {
-		await adminDriftClient.unsubscribe();
+		await adminVelocityClient.unsubscribe();
 		await adminClient.unsubscribe();
 		await managerClient.unsubscribe();
-		await managerDriftClient.unsubscribe();
+		await managerVelocityClient.unsubscribe();
 		await user1Client.unsubscribe();
-		await user1DriftClient.unsubscribe();
+		await user1VelocityClient.unsubscribe();
 		await user2Client.unsubscribe();
-		await user2DriftClient.unsubscribe();
+		await user2VelocityClient.unsubscribe();
 		await user3Client.unsubscribe();
-		await user3DriftClient.unsubscribe();
+		await user3VelocityClient.unsubscribe();
 	});
 
 	it('vaults initialized', async () => {

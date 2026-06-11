@@ -46,8 +46,8 @@ fi
 
 cargo fmt || exit 1
 
-yarn && cd ts/sdk && yarn && yarn build || exit 1
+bun install && cd ts/sdk && bun install && bun run build || exit 1
 
 home
 
-yarn prettify:fix || exit 1
+bun run prettify:fix || exit 1

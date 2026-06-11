@@ -26,7 +26,7 @@ export const vaultInvariantChecks = async (
 		process.exit(1);
 	}
 
-	const { driftVault, driftClient } = await getCommandContext(program, true);
+	const { velocityVault, velocityClient } = await getCommandContext(program, true);
 
 	/*
     Invariants:
@@ -34,12 +34,12 @@ export const vaultInvariantChecks = async (
     * sum(vault_depositors.profit_share_paid) == vault.manager_total_profit_share
     */
 
-	const vault = await driftVault.getVault(vaultAddress);
-	const spotMarket = driftVault.driftClient.getSpotMarketAccount(
+	const vault = await velocityVault.getVault(vaultAddress);
+	const spotMarket = velocityVault.velocityClient.getSpotMarketAccount(
 		vault.spotMarketIndex
 	);
 	const spotPrecision = new BN(10).pow(new BN(spotMarket!.decimals));
-	const spotOracle = driftVault.driftClient.getOracleDataForSpotMarket(
+	const spotOracle = velocityVault.velocityClient.getOracleDataForSpotMarket(
 		vault.spotMarketIndex
 	);
 	const spotOraclePriceNum = convertToNumber(spotOracle.price, PRICE_PRECISION);
@@ -47,20 +47,20 @@ export const vaultInvariantChecks = async (
 
 	const user = new User({
 		// accountSubscription,
-		driftClient,
+		velocityClient,
 		userAccountPublicKey: vault.user,
 	});
 	await user.subscribe();
 
-	const vaultEquity = await driftVault.calculateVaultEquity({
+	const vaultEquity = await velocityVault.calculateVaultEquity({
 		vault,
 	});
 	const vaultEquitySpot = vaultEquity.mul(spotPrecision).div(spotOracle.price);
 
-	const allVaultDepositors = await driftVault.getAllVaultDepositors(
+	const allVaultDepositors = await velocityVault.getAllVaultDepositors(
 		vaultAddress
 	);
-	const approxSlot = await driftVault.driftClient.connection.getSlot();
+	const approxSlot = await velocityVault.velocityClient.connection.getSlot();
 	const now = Date.now();
 
 	// let nonZeroDepositors = allVaultDepositors.filter(vd => vd.account.vaultShares.gt(new BN(0)));
@@ -287,27 +287,27 @@ export const vaultInvariantChecks = async (
 			spotPrecision
 		)}`
 	);
-	const driftUserDeposits = user.getUserAccount().totalDeposits;
-	const driftUserWithdraws = user.getUserAccount().totalWithdraws;
-	const driftUserSocialLoss = user.getUserAccount().totalSocialLoss;
+	const velocityUserDeposits = user.getUserAccount().totalDeposits;
+	const velocityUserWithdraws = user.getUserAccount().totalWithdraws;
+	const velocityUserSocialLoss = user.getUserAccount().totalSocialLoss;
 	console.log(
-		`vd drift user net deposits:  ${convertToNumber(
-			driftUserDeposits.sub(driftUserWithdraws).sub(driftUserSocialLoss),
+		`vd velocity user net deposits:  ${convertToNumber(
+			velocityUserDeposits.sub(velocityUserWithdraws).sub(velocityUserSocialLoss),
 			spotPrecision
 		)}`
 	);
 	console.log(
-		`  vd drift user deps: ${convertToNumber(driftUserDeposits, spotPrecision)}`
+		`  vd velocity user deps: ${convertToNumber(velocityUserDeposits, spotPrecision)}`
 	);
 	console.log(
-		`  vd drift user with: ${convertToNumber(
-			driftUserWithdraws,
+		`  vd velocity user with: ${convertToNumber(
+			velocityUserWithdraws,
 			spotPrecision
 		)}`
 	);
 	console.log(
-		`  vd drift user scls: ${convertToNumber(
-			driftUserSocialLoss,
+		`  vd velocity user scls: ${convertToNumber(
+			velocityUserSocialLoss,
 			spotPrecision
 		)}`
 	);

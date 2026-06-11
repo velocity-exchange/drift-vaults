@@ -2,7 +2,7 @@ module.exports = {
 	preset: 'ts-jest',
 	testEnvironment: 'node',
 	testMatch: [
-		// '**/tests/**/driftVaults.ts'
+		// '**/tests/**/velocityVaults.ts'
 		// '**/tests/**/*.test.ts'
 		'**/tests/**/*.ts'
 		// '**/tests/**/feeUpdate.test.ts'
@@ -10,7 +10,7 @@ module.exports = {
 	testPathIgnorePatterns: [
 		'tests/common/',
 		'tests/fixtures/',
-		//'tests/driftVaults.ts'
+		//'tests/velocityVaults.ts'
 	],
 	testTimeout: 1000000,  // This matches your current 1000000ms timeout
 	transform: {

@@ -78,10 +78,10 @@ fi
 # backgrounded. solana-test-validator takes the genesis programs from
 # Anchor.toml directly as --bpf-program flags.)
 bkg solana-test-validator --reset --quiet \
-  --bpf-program vELoC1audYbSYVRXn1vPaV8Axoa9oU6BYmNGZZBDZ1P tests/fixtures/drift.so \
+  --bpf-program vELoC1audYbSYVRXn1vPaV8Axoa9oU6BYmNGZZBDZ1P tests/fixtures/velocity.so \
   --bpf-program gSbePebfvPy7tRqimPoVecS2UsBvYv46ynrzWocc92s tests/fixtures/pyth.so \
   --bpf-program metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s tests/fixtures/metaplex/metaplex.so \
-  --bpf-program vAuLTsyrvSfZRuRB3XgvkPwNGgYSs9YRYymVebLKoxR target/deploy/drift_vaults.so \
+  --bpf-program vAuLTsyrvSfZRuRB3XgvkPwNGgYSs9YRYymVebLKoxR target/deploy/velocity_vaults.so \
   --account PwDiXFxQsGra4sFFTT8r1QWRMd4vfumiWC1jfWNfdYT tests/fixtures/metaplex/PwDiXFxQsGra4sFFTT8r1QWRMd4vfumiWC1jfWNfdYT.json
 
 # warm up validator (spurious errors may occur if this is not done)
@@ -92,10 +92,10 @@ sleep 5
 
 export ANCHOR_WALLET="$HOME/.config/solana/id.json"
 if [[ $no_test == false ]]; then
-  yarn anchor-tests
+  bun run anchor-tests
 fi
 
-# if --detach is not given, then the test is killed once "yarn anchor-tests" completes
+# if --detach is not given, then the test is killed once "bun run anchor-tests" completes
 # otherwise the validator continues to run
 # passing --detach has the same effect as running "anchor test --detach"
 if [[ $detach == false ]]; then

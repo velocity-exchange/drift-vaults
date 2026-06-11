@@ -13,8 +13,8 @@ import {
 } from '../ts/sdk/lib';
 import {
 	BulkAccountLoader,
-	DRIFT_PROGRAM_ID,
-	DriftClient,
+	VELOCITY_PROGRAM_ID,
+	VelocityClient,
 	OracleSource,
 	PEG_PRECISION,
 	PublicKey,
@@ -38,9 +38,9 @@ const mantissaSqrtScale = new BN(100_000);
 const ammInitialQuoteAssetReserve = new BN(5 * 10 ** 13).mul(mantissaSqrtScale);
 const ammInitialBaseAssetReserve = new BN(5 * 10 ** 13).mul(mantissaSqrtScale);
 
-describe('driftVaults', () => {
+describe('velocityVaults', () => {
 	const initialSolPerpPrice = 100;
-	let adminDriftClient: TestClient;
+	let adminVelocityClient: TestClient;
 	let bulkAccountLoader: TestBulkAccountLoader;
 	let bankrunContextWrapper: BankrunContextWrapper;
 	let usdcMint: PublicKey;
@@ -54,11 +54,11 @@ describe('driftVaults', () => {
 
 	const managerSigner = Keypair.generate();
 	let managerClient: VaultClient;
-	let managerDriftClient: DriftClient;
+	let managerVelocityClient: VelocityClient;
 
 	const user1Signer = Keypair.generate();
 	let user1Client: VaultClient;
-	let user1DriftClient: DriftClient;
+	let user1VelocityClient: VelocityClient;
 	let user1UserUSDCAccount: PublicKey;
 	let user1VaultDepositor: PublicKey;
 
@@ -71,7 +71,7 @@ describe('driftVaults', () => {
 			'',
 			[
 				{
-					name: 'drift',
+					name: 'velocity',
 					programId: new PublicKey(
 						'vELoC1audYbSYVRXn1vPaV8Axoa9oU6BYmNGZZBDZ1P'
 					),
@@ -96,10 +96,10 @@ describe('driftVaults', () => {
 			initialSolPerpPrice
 		);
 
-		adminDriftClient = new TestClient({
+		adminVelocityClient = new TestClient({
 			connection: bankrunContextWrapper.connection.toConnection(),
 			wallet: bankrunContextWrapper.provider.wallet,
-			programID: new PublicKey(DRIFT_PROGRAM_ID),
+			programID: new PublicKey(VELOCITY_PROGRAM_ID),
 			opts: {
 				commitment: 'confirmed',
 			},
@@ -114,13 +114,13 @@ describe('driftVaults', () => {
 			},
 		});
 
-		await adminDriftClient.initialize(usdcMint, true);
-		await adminDriftClient.subscribe();
+		await adminVelocityClient.initialize(usdcMint, true);
+		await adminVelocityClient.subscribe();
 
-		await initializeQuoteSpotMarket(adminDriftClient, usdcMint);
-		await initializeSolSpotMarket(adminDriftClient, solPerpOracle);
+		await initializeQuoteSpotMarket(adminVelocityClient, usdcMint);
+		await initializeSolSpotMarket(adminVelocityClient, solPerpOracle);
 
-		await adminDriftClient.initializePerpMarket(
+		await adminVelocityClient.initializePerpMarket(
 			0,
 			solPerpOracle,
 			ammInitialBaseAssetReserve,
@@ -130,7 +130,7 @@ describe('driftVaults', () => {
 			OracleSource.PYTH
 		);
 
-		await adminDriftClient.fetchAccounts();
+		await adminVelocityClient.fetchAccounts();
 
 		const managerBootstrap = await bootstrapSignerClientAndUserBankrun({
 			bankrunContext: bankrunContextWrapper,
@@ -139,7 +139,7 @@ describe('driftVaults', () => {
 			usdcMint: usdcMint,
 			usdcAmount,
 			vaultClientCliMode: true,
-			driftClientConfig: {
+			velocityClientConfig: {
 				accountSubscription: {
 					type: 'polling',
 					accountLoader: bulkAccountLoader as BulkAccountLoader,
@@ -152,7 +152,7 @@ describe('driftVaults', () => {
 			},
 		});
 		managerClient = managerBootstrap.vaultClient;
-		managerDriftClient = managerBootstrap.driftClient;
+		managerVelocityClient = managerBootstrap.velocityClient;
 
 		const user1Bootstrap = await bootstrapSignerClientAndUserBankrun({
 			bankrunContext: bankrunContextWrapper,
@@ -161,7 +161,7 @@ describe('driftVaults', () => {
 			usdcMint: usdcMint,
 			usdcAmount,
 			vaultClientCliMode: true,
-			driftClientConfig: {
+			velocityClientConfig: {
 				accountSubscription: {
 					type: 'polling',
 					accountLoader: bulkAccountLoader as BulkAccountLoader,
@@ -174,7 +174,7 @@ describe('driftVaults', () => {
 			},
 		});
 		user1Client = user1Bootstrap.vaultClient;
-		user1DriftClient = user1Bootstrap.driftClient;
+		user1VelocityClient = user1Bootstrap.velocityClient;
 		user1UserUSDCAccount = user1Bootstrap.userUSDCAccount.publicKey;
 		user1VaultDepositor = getVaultDepositorAddressSync(
 			VAULT_PROGRAM_ID,
@@ -184,12 +184,12 @@ describe('driftVaults', () => {
 
 		const provider = new BankrunProvider(
 			bankrunContextWrapper.context,
-			adminDriftClient.wallet as anchor.Wallet
+			adminVelocityClient.wallet as anchor.Wallet
 		);
 		const program = new Program(IDL, provider);
 		adminClient = new VaultClient({
 			// @ts-ignore
-			driftClient: adminDriftClient,
+			velocityClient: adminVelocityClient,
 			// @ts-ignore
 			program,
 		});
@@ -212,12 +212,12 @@ describe('driftVaults', () => {
 	});
 
 	afterEach(async () => {
-		await adminDriftClient.unsubscribe();
+		await adminVelocityClient.unsubscribe();
 		await adminClient.unsubscribe();
 		await managerClient.unsubscribe();
-		await managerDriftClient.unsubscribe();
+		await managerVelocityClient.unsubscribe();
 		await user1Client.unsubscribe();
-		await user1DriftClient.unsubscribe();
+		await user1VelocityClient.unsubscribe();
 	});
 
 	it('user deposit beyond max', async () => {

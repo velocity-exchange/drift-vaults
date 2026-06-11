@@ -11,7 +11,7 @@ import {
 	getVaultAddressSync,
 	getVaultDepositorAddressSync,
 	encodeName,
-	DriftVaults,
+	VelocityVaults,
 	VAULT_PROGRAM_ID,
 	IDL,
 	isNormalVaultClass,
@@ -19,8 +19,8 @@ import {
 } from '../ts/sdk/lib';
 import {
 	BulkAccountLoader,
-	DRIFT_PROGRAM_ID,
-	DriftClient,
+	VELOCITY_PROGRAM_ID,
+	VelocityClient,
 	OracleSource,
 	PEG_PRECISION,
 	PublicKey,
@@ -47,9 +47,9 @@ const ammInitialQuoteAssetReserve = new BN(5 * 10 ** 13).mul(mantissaSqrtScale);
 const ammInitialBaseAssetReserve = new BN(5 * 10 ** 13).mul(mantissaSqrtScale);
 
 describe('TestTrustedVault', () => {
-	let vaultProgram: Program<DriftVaults>;
+	let vaultProgram: Program<VelocityVaults>;
 	const initialSolPerpPrice = 100;
-	let adminDriftClient: TestClient;
+	let adminVelocityClient: TestClient;
 	let bulkAccountLoader: TestBulkAccountLoader;
 	let bankrunContextWrapper: BankrunContextWrapper;
 	let usdcMint: PublicKey;
@@ -63,14 +63,14 @@ describe('TestTrustedVault', () => {
 
 	const managerSigner = Keypair.generate();
 	let managerClient: VaultClient;
-	let managerDriftClient: DriftClient;
+	let managerVelocityClient: VelocityClient;
 	let managerUserUSDCAccount: PublicKey;
 
 	let adminClient: VaultClient;
 
 	const user1Signer = Keypair.generate();
 	let user1Client: VaultClient;
-	let user1DriftClient: DriftClient;
+	let user1VelocityClient: VelocityClient;
 	let user1UserUSDCAccount: PublicKey;
 	let user1VaultDepositor: PublicKey;
 
@@ -79,7 +79,7 @@ describe('TestTrustedVault', () => {
 			'',
 			[
 				{
-					name: 'drift',
+					name: 'velocity',
 					programId: new PublicKey(
 						'vELoC1audYbSYVRXn1vPaV8Axoa9oU6BYmNGZZBDZ1P'
 					),
@@ -91,7 +91,7 @@ describe('TestTrustedVault', () => {
 		// wrap the context to use it with the test helpers
 		bankrunContextWrapper = new BankrunContextWrapper(context);
 
-		vaultProgram = new Program<DriftVaults>(
+		vaultProgram = new Program<VelocityVaults>(
 			IDL,
 			bankrunContextWrapper.provider
 		);
@@ -118,10 +118,10 @@ describe('TestTrustedVault', () => {
 			100 * LAMPORTS_PER_SOL
 		);
 
-		adminDriftClient = new TestClient({
+		adminVelocityClient = new TestClient({
 			connection: bankrunContextWrapper.connection.toConnection(),
 			wallet: adminWallet,
-			programID: new PublicKey(DRIFT_PROGRAM_ID),
+			programID: new PublicKey(VELOCITY_PROGRAM_ID),
 			opts: {
 				commitment: 'confirmed',
 			},
@@ -136,13 +136,13 @@ describe('TestTrustedVault', () => {
 			},
 		});
 
-		await adminDriftClient.initialize(usdcMint, true);
-		await adminDriftClient.subscribe();
+		await adminVelocityClient.initialize(usdcMint, true);
+		await adminVelocityClient.subscribe();
 
-		await initializeQuoteSpotMarket(adminDriftClient, usdcMint);
-		await initializeSolSpotMarket(adminDriftClient, solPerpOracle);
+		await initializeQuoteSpotMarket(adminVelocityClient, usdcMint);
+		await initializeSolSpotMarket(adminVelocityClient, solPerpOracle);
 
-		await adminDriftClient.initializePerpMarket(
+		await adminVelocityClient.initializePerpMarket(
 			0,
 			solPerpOracle,
 			ammInitialBaseAssetReserve,
@@ -152,7 +152,7 @@ describe('TestTrustedVault', () => {
 			OracleSource.PYTH
 		);
 
-		await adminDriftClient.fetchAccounts();
+		await adminVelocityClient.fetchAccounts();
 
 		const managerBootstrap = await bootstrapSignerClientAndUserBankrun({
 			bankrunContext: bankrunContextWrapper,
@@ -161,7 +161,7 @@ describe('TestTrustedVault', () => {
 			usdcMint: usdcMint,
 			usdcAmount,
 			vaultClientCliMode: true,
-			driftClientConfig: {
+			velocityClientConfig: {
 				accountSubscription: {
 					type: 'polling',
 					accountLoader: bulkAccountLoader as BulkAccountLoader,
@@ -174,16 +174,16 @@ describe('TestTrustedVault', () => {
 			},
 		});
 		managerClient = managerBootstrap.vaultClient;
-		managerDriftClient = managerBootstrap.driftClient;
+		managerVelocityClient = managerBootstrap.velocityClient;
 		managerUserUSDCAccount = managerBootstrap.userUSDCAccount.publicKey;
 
 		const provider = new BankrunProvider(
 			bankrunContextWrapper.context,
-			adminDriftClient.wallet as anchor.Wallet
+			adminVelocityClient.wallet as anchor.Wallet
 		);
 		const program = new Program(IDL, provider);
 		adminClient = new VaultClient({
-			driftClient: adminDriftClient,
+			velocityClient: adminVelocityClient,
 			// @ts-ignore
 			program,
 		});
@@ -195,7 +195,7 @@ describe('TestTrustedVault', () => {
 			usdcMint: usdcMint,
 			usdcAmount,
 			vaultClientCliMode: true,
-			driftClientConfig: {
+			velocityClientConfig: {
 				accountSubscription: {
 					type: 'polling',
 					accountLoader: bulkAccountLoader as BulkAccountLoader,
@@ -208,7 +208,7 @@ describe('TestTrustedVault', () => {
 			},
 		});
 		user1Client = user1Bootstrap.vaultClient;
-		user1DriftClient = user1Bootstrap.driftClient;
+		user1VelocityClient = user1Bootstrap.velocityClient;
 		user1UserUSDCAccount = user1Bootstrap.userUSDCAccount.publicKey;
 		user1VaultDepositor = getVaultDepositorAddressSync(
 			vaultProgram.programId,
@@ -240,12 +240,12 @@ describe('TestTrustedVault', () => {
 	});
 
 	afterEach(async () => {
-		await adminDriftClient.unsubscribe();
+		await adminVelocityClient.unsubscribe();
 		await adminClient.unsubscribe();
 		await managerClient.unsubscribe();
-		await managerDriftClient.unsubscribe();
+		await managerVelocityClient.unsubscribe();
 		await user1Client.unsubscribe();
-		await user1DriftClient.unsubscribe();
+		await user1VelocityClient.unsubscribe();
 	});
 
 	it('vaults initialized', async () => {
@@ -283,12 +283,12 @@ describe('TestTrustedVault', () => {
 		vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
 		expect(isTrustedVaultClass(vaultAcct.vaultClass)).toEqual(true);
 
-		// user1 deposit sol into drift (for vault to borrow)
+		// user1 deposit sol into velocity (for vault to borrow)
 		await bankrunContextWrapper.fundKeypair(
 			user1Signer,
 			100 * LAMPORTS_PER_SOL
 		);
-		await user1DriftClient.deposit(
+		await user1VelocityClient.deposit(
 			new BN(100 * LAMPORTS_PER_SOL),
 			1,
 			user1Signer.publicKey,
@@ -310,8 +310,8 @@ describe('TestTrustedVault', () => {
 		});
 		expect(vaultEquityBefore.toString()).toEqual(usdcAmount.toString());
 
-		await adminDriftClient.fetchAccounts();
-		const spotMarket1 = adminDriftClient.getSpotMarketAccount(1);
+		await adminVelocityClient.fetchAccounts();
+		const spotMarket1 = adminVelocityClient.getSpotMarketAccount(1);
 		expect(spotMarket1!.depositBalance.toNumber()).toEqual(
 			100 * LAMPORTS_PER_SOL
 		);
@@ -350,7 +350,7 @@ describe('TestTrustedVault', () => {
 			);
 
 		// check spot market recognizes borrows
-		const spotMarket11 = adminDriftClient.getSpotMarketAccount(1);
+		const spotMarket11 = adminVelocityClient.getSpotMarketAccount(1);
 		expect(spotMarket11!.borrowBalance.toNumber()).toBeCloseTo(
 			50 * LAMPORTS_PER_SOL,
 			-1
@@ -363,7 +363,7 @@ describe('TestTrustedVault', () => {
 		).toBeCloseTo(50, 2);
 
 		// check vault equity unchanged
-		await adminClient.driftClient.fetchAccounts();
+		await adminClient.velocityClient.fetchAccounts();
 		const vaultEquityAfterBorrow = await adminClient.calculateVaultEquity({
 			address: commonVaultKey,
 		});
@@ -401,7 +401,7 @@ describe('TestTrustedVault', () => {
 		vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
 		expect(vaultAcct.managerBorrowedValue.toNumber()).toEqual(0);
 
-		await adminClient.driftClient.fetchAccounts();
+		await adminClient.velocityClient.fetchAccounts();
 		const vaultEquityAfterRepay = await adminClient.calculateVaultEquity({
 			address: commonVaultKey,
 		});
@@ -430,12 +430,12 @@ describe('TestTrustedVault', () => {
 		vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
 		expect(isTrustedVaultClass(vaultAcct.vaultClass)).toEqual(true);
 
-		// user1 deposit sol into drift (for vault to borrow)
+		// user1 deposit sol into velocity (for vault to borrow)
 		await bankrunContextWrapper.fundKeypair(
 			user1Signer,
 			100 * LAMPORTS_PER_SOL
 		);
-		await user1DriftClient.deposit(
+		await user1VelocityClient.deposit(
 			new BN(100 * LAMPORTS_PER_SOL),
 			1,
 			user1Signer.publicKey,
@@ -457,8 +457,8 @@ describe('TestTrustedVault', () => {
 		});
 		expect(vaultEquityBefore.toString()).toEqual(usdcAmount.toString());
 
-		await adminDriftClient.fetchAccounts();
-		const spotMarket1 = adminDriftClient.getSpotMarketAccount(1);
+		await adminVelocityClient.fetchAccounts();
+		const spotMarket1 = adminVelocityClient.getSpotMarketAccount(1);
 		expect(spotMarket1!.depositBalance.toNumber()).toEqual(
 			100 * LAMPORTS_PER_SOL
 		);
@@ -497,7 +497,7 @@ describe('TestTrustedVault', () => {
 			);
 
 		// check spot market recognizes borrows
-		const spotMarket11 = adminDriftClient.getSpotMarketAccount(1);
+		const spotMarket11 = adminVelocityClient.getSpotMarketAccount(1);
 		expect(spotMarket11!.borrowBalance.toNumber()).toBeCloseTo(
 			50 * LAMPORTS_PER_SOL,
 			-1
@@ -510,7 +510,7 @@ describe('TestTrustedVault', () => {
 		).toBeCloseTo(50, 2);
 
 		// check vault equity unchanged
-		await adminClient.driftClient.fetchAccounts();
+		await adminClient.velocityClient.fetchAccounts();
 		const vaultEquityAfterBorrow = await adminClient.calculateVaultEquity({
 			address: commonVaultKey,
 		});
@@ -532,7 +532,7 @@ describe('TestTrustedVault', () => {
 		vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
 		expect(vaultAcct.managerBorrowedValue.toNumber()).toEqual(0);
 
-		await adminClient.driftClient.fetchAccounts();
+		await adminClient.velocityClient.fetchAccounts();
 		const vaultEquityAfterRepay = await adminClient.calculateVaultEquity({
 			address: commonVaultKey,
 		});

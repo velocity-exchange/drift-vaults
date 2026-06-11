@@ -1,4 +1,4 @@
-# Drift Vaults
+# Velocity Vaults
 
 soon^TM
 
@@ -42,7 +42,7 @@ export PATH="/opt/homebrew/opt/gnu-tar/libexec/gnubin:$PATH"
 ## Run tests
 
 ```shell
-yarn && cd ts/sdk && yarn && yarn build && cd ..
+bun install && cd ts/sdk && bun install && bun run build && cd ..
 
 # can be any valid key
 ANCHOR_WALLET=~/.config/solana/id.json && anchor test

@@ -8,7 +8,7 @@
 	},
 	"dependencies": {
 		"@metaplex-foundation/js": "0.20.1",
-		"@velocity-exchange/sdk": "0.0.3",
+		"@velocity-exchange/sdk": "0.0.5",
 		"commander": "11.1.0",
 		"dotenv": "16.4.5",
 		"strict-event-emitter-types": "2.0.0",
@@ -35,14 +35,13 @@
 	"scripts": {
 		"cli": "ts-node cli/cli.ts",
 		"clean": "rm -rf lib",
-		"build": "yarn clean && tsc"
+		"build": "bun run clean && tsc"
 	},
 	"resolutions": {
 		"@types/bn.js": "5.1.6",
 		"rpc-websockets": "10.0.0",
 		"@solana/web3.js": "1.98.0",
-		"@drift-labs/sdk": "npm:@velocity-exchange/sdk@0.0.3",
-		"@velocity-exchange/sdk": "0.0.3",
+		"@velocity-exchange/sdk": "0.0.5",
 		"@coral-xyz/anchor": "npm:@anchor-lang/core@1.0.1"
 	}
 }
