@@ -1,6 +1,6 @@
+import { expect } from 'chai';
 import * as anchor from '@coral-xyz/anchor';
 import { BN, Program, Wallet } from '@coral-xyz/anchor';
-import { describe, it } from '@jest/globals';
 import {
 	BankrunContextWrapper,
 	TEST_ADMIN_KEYPAIR,
@@ -250,9 +250,9 @@ describe('TestTrustedVault', () => {
 
 	it('vaults initialized', async () => {
 		const vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.manager).toEqual(managerSigner.publicKey);
+		expect(vaultAcct.manager).to.eql(managerSigner.publicKey);
 
-		expect(isNormalVaultClass(vaultAcct.vaultClass)).toEqual(true);
+		expect(isNormalVaultClass(vaultAcct.vaultClass)).to.eql(true);
 
 		const vaultDepositor = getVaultDepositorAddressSync(
 			vaultProgram.programId,
@@ -262,13 +262,13 @@ describe('TestTrustedVault', () => {
 		const vdAcct = await vaultProgram.account.vaultDepositor.fetch(
 			vaultDepositor
 		);
-		expect(vdAcct.vault).toEqual(commonVaultKey);
+		expect(vdAcct.vault).to.eql(commonVaultKey);
 	});
 
 	it('admin can update vault class and borrow and repay', async () => {
 		let vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.manager).toEqual(managerSigner.publicKey);
-		expect(isNormalVaultClass(vaultAcct.vaultClass)).toEqual(true);
+		expect(vaultAcct.manager).to.eql(managerSigner.publicKey);
+		expect(isNormalVaultClass(vaultAcct.vaultClass)).to.eql(true);
 
 		await adminClient.updateMarginTradingEnabled(commonVaultKey, true, {
 			noLut: true,
@@ -281,7 +281,7 @@ describe('TestTrustedVault', () => {
 		);
 
 		vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(isTrustedVaultClass(vaultAcct.vaultClass)).toEqual(true);
+		expect(isTrustedVaultClass(vaultAcct.vaultClass)).to.eql(true);
 
 		// user1 deposit sol into velocity (for vault to borrow)
 		await bankrunContextWrapper.fundKeypair(
@@ -308,11 +308,11 @@ describe('TestTrustedVault', () => {
 		const vaultEquityBefore = await adminClient.calculateVaultEquity({
 			address: commonVaultKey,
 		});
-		expect(vaultEquityBefore.toString()).toEqual(usdcAmount.toString());
+		expect(vaultEquityBefore.toString()).to.eql(usdcAmount.toString());
 
 		await adminVelocityClient.fetchAccounts();
 		const spotMarket1 = adminVelocityClient.getSpotMarketAccount(1);
-		expect(spotMarket1!.depositBalance.toNumber()).toEqual(
+		expect(spotMarket1!.depositBalance.toNumber()).to.eql(
 			100 * LAMPORTS_PER_SOL
 		);
 
@@ -336,13 +336,13 @@ describe('TestTrustedVault', () => {
 			// @ts-ignore
 			adminClient.program
 		);
-		expect(e.length).toEqual(2);
-		expect((e[0].data.borrowAmount as BN).toNumber()).toEqual(
+		expect(e.length).to.eql(2);
+		expect((e[0].data.borrowAmount as BN).toNumber()).to.eql(
 			50 * LAMPORTS_PER_SOL
 		);
-		expect((e[0].data.borrowValue as BN).toNumber()).toEqual(5000 * 1e6);
-		expect(e[0].data.borrowSpotMarketIndex).toEqual(1);
-		expect(e[0].data.depositSpotMarketIndex).toEqual(0);
+		expect((e[0].data.borrowValue as BN).toNumber()).to.eql(5000 * 1e6);
+		expect(e[0].data.borrowSpotMarketIndex).to.eql(1);
+		expect(e[0].data.depositSpotMarketIndex).to.eql(0);
 
 		const managerSOLBalance1 =
 			await bankrunContextWrapper.connection.getBalance(
@@ -351,16 +351,16 @@ describe('TestTrustedVault', () => {
 
 		// check spot market recognizes borrows
 		const spotMarket11 = adminVelocityClient.getSpotMarketAccount(1);
-		expect(spotMarket11!.borrowBalance.toNumber()).toBeCloseTo(
+		expect(spotMarket11!.borrowBalance.toNumber()).to.be.closeTo(
 			50 * LAMPORTS_PER_SOL,
-			-1
+			5
 		);
 
 		// check manager borrowed SOL
 		expect(
 			(Number(managerSOLBalance1) - Number(managerSOLBalance0)) /
 				LAMPORTS_PER_SOL
-		).toBeCloseTo(50, 2);
+		).to.be.closeTo(50, 0.005);
 
 		// check vault equity unchanged
 		await adminClient.velocityClient.fetchAccounts();
@@ -368,13 +368,13 @@ describe('TestTrustedVault', () => {
 			address: commonVaultKey,
 		});
 		// we repaid 10% less value, so expect vault equity to go down 10%
-		expect(vaultEquityAfterBorrow.toNumber()).toEqual(
+		expect(vaultEquityAfterBorrow.toNumber()).to.eql(
 			vaultEquityBefore.toNumber()
 		);
 
 		// check vault records manager's borrow in deposit asset value
 		vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.managerBorrowedValue.toNumber()).toEqual(5000 * 1e6);
+		expect(vaultAcct.managerBorrowedValue.toNumber()).to.eql(5000 * 1e6);
 
 		// manager repays in USDC
 		const repayTx = await managerClient.managerRepay(
@@ -392,14 +392,14 @@ describe('TestTrustedVault', () => {
 			// @ts-ignore
 			adminClient.program
 		);
-		expect(repayEvents.length).toEqual(2);
-		expect(repayEvents[0].data.repayAmount.toNumber()).toEqual(4500 * 1e6);
-		expect(repayEvents[0].data.repayValue.toNumber()).toEqual(5000 * 1e6);
-		expect(repayEvents[0].data.repaySpotMarketIndex).toEqual(0);
-		expect(repayEvents[0].data.depositSpotMarketIndex).toEqual(0);
+		expect(repayEvents.length).to.eql(2);
+		expect(repayEvents[0].data.repayAmount.toNumber()).to.eql(4500 * 1e6);
+		expect(repayEvents[0].data.repayValue.toNumber()).to.eql(5000 * 1e6);
+		expect(repayEvents[0].data.repaySpotMarketIndex).to.eql(0);
+		expect(repayEvents[0].data.depositSpotMarketIndex).to.eql(0);
 
 		vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.managerBorrowedValue.toNumber()).toEqual(0);
+		expect(vaultAcct.managerBorrowedValue.toNumber()).to.eql(0);
 
 		await adminClient.velocityClient.fetchAccounts();
 		const vaultEquityAfterRepay = await adminClient.calculateVaultEquity({
@@ -407,15 +407,15 @@ describe('TestTrustedVault', () => {
 		});
 		// we repaid 10% less value
 		// expect final vault equity to go down by 10% of the borrowed value
-		expect(vaultEquityAfterRepay.toNumber()).toEqual(
+		expect(vaultEquityAfterRepay.toNumber()).to.eql(
 			vaultEquityBefore.toNumber() - 5000 * 1e6 * 0.1
 		);
 	});
 
 	it('admin can update vault class and update borrow', async () => {
 		let vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.manager).toEqual(managerSigner.publicKey);
-		expect(isNormalVaultClass(vaultAcct.vaultClass)).toEqual(true);
+		expect(vaultAcct.manager).to.eql(managerSigner.publicKey);
+		expect(isNormalVaultClass(vaultAcct.vaultClass)).to.eql(true);
 
 		await adminClient.updateMarginTradingEnabled(commonVaultKey, true, {
 			noLut: true,
@@ -428,7 +428,7 @@ describe('TestTrustedVault', () => {
 		);
 
 		vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(isTrustedVaultClass(vaultAcct.vaultClass)).toEqual(true);
+		expect(isTrustedVaultClass(vaultAcct.vaultClass)).to.eql(true);
 
 		// user1 deposit sol into velocity (for vault to borrow)
 		await bankrunContextWrapper.fundKeypair(
@@ -455,11 +455,11 @@ describe('TestTrustedVault', () => {
 		const vaultEquityBefore = await adminClient.calculateVaultEquity({
 			address: commonVaultKey,
 		});
-		expect(vaultEquityBefore.toString()).toEqual(usdcAmount.toString());
+		expect(vaultEquityBefore.toString()).to.eql(usdcAmount.toString());
 
 		await adminVelocityClient.fetchAccounts();
 		const spotMarket1 = adminVelocityClient.getSpotMarketAccount(1);
-		expect(spotMarket1!.depositBalance.toNumber()).toEqual(
+		expect(spotMarket1!.depositBalance.toNumber()).to.eql(
 			100 * LAMPORTS_PER_SOL
 		);
 
@@ -483,13 +483,13 @@ describe('TestTrustedVault', () => {
 			// @ts-ignore
 			adminClient.program
 		);
-		expect(e.length).toEqual(2);
-		expect((e[0].data.borrowAmount as BN).toNumber()).toEqual(
+		expect(e.length).to.eql(2);
+		expect((e[0].data.borrowAmount as BN).toNumber()).to.eql(
 			50 * LAMPORTS_PER_SOL
 		);
-		expect((e[0].data.borrowValue as BN).toNumber()).toEqual(5000 * 1e6);
-		expect(e[0].data.borrowSpotMarketIndex).toEqual(1);
-		expect(e[0].data.depositSpotMarketIndex).toEqual(0);
+		expect((e[0].data.borrowValue as BN).toNumber()).to.eql(5000 * 1e6);
+		expect(e[0].data.borrowSpotMarketIndex).to.eql(1);
+		expect(e[0].data.depositSpotMarketIndex).to.eql(0);
 
 		const managerSOLBalance1 =
 			await bankrunContextWrapper.connection.getBalance(
@@ -498,16 +498,16 @@ describe('TestTrustedVault', () => {
 
 		// check spot market recognizes borrows
 		const spotMarket11 = adminVelocityClient.getSpotMarketAccount(1);
-		expect(spotMarket11!.borrowBalance.toNumber()).toBeCloseTo(
+		expect(spotMarket11!.borrowBalance.toNumber()).to.be.closeTo(
 			50 * LAMPORTS_PER_SOL,
-			-1
+			5
 		);
 
 		// check manager borrowed SOL
 		expect(
 			(Number(managerSOLBalance1) - Number(managerSOLBalance0)) /
 				LAMPORTS_PER_SOL
-		).toBeCloseTo(50, 2);
+		).to.be.closeTo(50, 0.005);
 
 		// check vault equity unchanged
 		await adminClient.velocityClient.fetchAccounts();
@@ -515,13 +515,13 @@ describe('TestTrustedVault', () => {
 			address: commonVaultKey,
 		});
 		// we repaid 10% less value, so expect vault equity to go down 10%
-		expect(vaultEquityAfterBorrow.toNumber()).toEqual(
+		expect(vaultEquityAfterBorrow.toNumber()).to.eql(
 			vaultEquityBefore.toNumber()
 		);
 
 		// check vault records manager's borrow in deposit asset value
 		vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.managerBorrowedValue.toNumber()).toEqual(5000 * 1e6);
+		expect(vaultAcct.managerBorrowedValue.toNumber()).to.eql(5000 * 1e6);
 
 		// manager repays in USDC
 		await managerClient.managerUpdateBorrow(commonVaultKey, new BN(0), {
@@ -530,7 +530,7 @@ describe('TestTrustedVault', () => {
 		});
 
 		vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.managerBorrowedValue.toNumber()).toEqual(0);
+		expect(vaultAcct.managerBorrowedValue.toNumber()).to.eql(0);
 
 		await adminClient.velocityClient.fetchAccounts();
 		const vaultEquityAfterRepay = await adminClient.calculateVaultEquity({
@@ -538,7 +538,7 @@ describe('TestTrustedVault', () => {
 		});
 		// we repaid 10% less value
 		// expect final vault equity to go down by 10% of the borrowed value
-		expect(vaultEquityAfterRepay.toNumber()).toEqual(
+		expect(vaultEquityAfterRepay.toNumber()).to.eql(
 			vaultEquityBefore.toNumber() - 5000 * 1e6
 		);
 	});

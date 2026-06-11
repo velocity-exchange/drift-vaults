@@ -1,6 +1,6 @@
+import { expect } from 'chai';
 import * as anchor from '@coral-xyz/anchor';
 import { BN, Program } from '@coral-xyz/anchor';
-import { describe, it } from '@jest/globals';
 import { BankrunContextWrapper } from './common/bankrunConnection';
 import { startAnchor } from 'solana-bankrun';
 import {
@@ -334,7 +334,7 @@ describe('velocityVaults', () => {
 		});
 		// console.log('vault equity', vaultEquity.toString());
 
-		expect(vaultEquity.toString()).toBe('300000000000');
+		expect(vaultEquity.toString()).to.equal('300000000000');
 
 		// console.log(vault.user);
 
@@ -365,7 +365,7 @@ describe('velocityVaults', () => {
 		vaultEquity = await user2Client.calculateVaultEquity({
 			address: commonVaultKey,
 		});
-		expect(vaultEquity.toString()).toBe('330000000000');
+		expect(vaultEquity.toString()).to.equal('330000000000');
 
 		// user1 requests 100% withdraw
 		await user1Client.syncVaultUsers();
@@ -388,7 +388,7 @@ describe('velocityVaults', () => {
 		vaultEquity = await user2Client.calculateVaultEquity({
 			address: commonVaultKey,
 		});
-		expect(vaultEquity.toString()).toBe('363000000000');
+		expect(vaultEquity.toString()).to.equal('363000000000');
 
 		await user1Client.cancelRequestWithdraw(user1VaultDepositor, {
 			noLut: true,
@@ -413,7 +413,7 @@ describe('velocityVaults', () => {
 		vaultEquity = await user2Client.calculateVaultEquity({
 			address: commonVaultKey,
 		});
-		expect(vaultEquity.toString()).toBe('326700000000');
+		expect(vaultEquity.toString()).to.equal('326700000000');
 
 		// user1 requests 100% withdraw
 		await user1Client.syncVaultUsers();
@@ -439,7 +439,7 @@ describe('velocityVaults', () => {
 		vaultEquity = await user2Client.calculateVaultEquity({
 			address: commonVaultKey,
 		});
-		expect(vaultEquity.toString()).toBe('163350000000');
+		expect(vaultEquity.toString()).to.equal('163350000000');
 		await bankrunContextWrapper.moveTimeForward(1000);
 
 		await user1Client.syncVaultUsers();
@@ -460,19 +460,19 @@ describe('velocityVaults', () => {
 			user1VaultDepositor
 		);
 		// console.log('vd1', vd1);
-		expect(vd1.vaultShares.toString()).toBe('0');
+		expect(vd1.vaultShares.toString()).to.equal('0');
 
 		vd2 = await user2Client.program.account.vaultDepositor.fetch(
 			user2VaultDepositor
 		);
 		// console.log('vd2', vd2);
-		expect(vd2.vaultShares.toString()).toBe('200000000000');
+		expect(vd2.vaultShares.toString()).to.equal('200000000000');
 
 		await user2Client.syncVaultUsers();
 		vaultEquity = await user2Client.calculateVaultEquity({
 			address: commonVaultKey,
 		});
 		// console.log('vault equity', vaultEquity.toString());
-		expect(vaultEquity.toString()).toBe('113850000000');
+		expect(vaultEquity.toString()).to.equal('113850000000');
 	});
 });

@@ -1,6 +1,6 @@
+import { expect } from 'chai';
 import * as anchor from '@coral-xyz/anchor';
 import { BN, Program, Wallet } from '@coral-xyz/anchor';
-import { describe, it } from '@jest/globals';
 import {
 	BankrunContextWrapper,
 	TEST_ADMIN_KEYPAIR,
@@ -32,6 +32,7 @@ import {
 } from '@velocity-exchange/sdk';
 import { TestBulkAccountLoader } from './common/testBulkAccountLoader';
 import {
+	assert,
 	bootstrapSignerClientAndUserBankrun,
 	initializeQuoteSpotMarket,
 	initializeSolSpotMarket,
@@ -312,7 +313,7 @@ describe('feeUpdate', () => {
 
 	it('vaults initialized', async () => {
 		const vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.manager).toEqual(managerSigner.publicKey);
+		expect(vaultAcct.manager).to.eql(managerSigner.publicKey);
 
 		const vaultDepositor = getVaultDepositorAddressSync(
 			vaultProgram.programId,
@@ -322,7 +323,7 @@ describe('feeUpdate', () => {
 		const vdAcct = await vaultProgram.account.vaultDepositor.fetch(
 			vaultDepositor
 		);
-		expect(vdAcct.vault).toEqual(commonVaultKey);
+		expect(vdAcct.vault).to.eql(commonVaultKey);
 
 		const vaultDepositor2 = getVaultDepositorAddressSync(
 			vaultProgram.programId,
@@ -332,12 +333,12 @@ describe('feeUpdate', () => {
 		const vdAcct2 = await vaultProgram.account.vaultDepositor.fetch(
 			vaultDepositor2
 		);
-		expect(vdAcct2.vault).toEqual(commonVaultKey);
+		expect(vdAcct2.vault).to.eql(commonVaultKey);
 	});
 
 	it('only admin can init fee update account', async () => {
 		let vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.feeUpdateStatus).toEqual(FeeUpdateStatus.None);
+		expect(vaultAcct.feeUpdateStatus).to.eql(FeeUpdateStatus.None);
 
 		const feeUpdate = getFeeUpdateAddressSync(
 			vaultProgram.programId,
@@ -345,34 +346,34 @@ describe('feeUpdate', () => {
 		);
 		expect(
 			await bankrunContextWrapper.connection.getAccountInfo(feeUpdate)
-		).toBeNull();
+		).to.equal(null);
 
 		// manager cannot init their own FeeUpdate account
 		try {
 			await managerClient.adminInitFeeUpdate(commonVaultKey, { noLut: true });
-			fail('should not get here');
+			assert(false, 'should not get here');
 		} catch (e) {
-			expect(e).toBeDefined();
+			expect(e).to.not.equal(undefined);
 		}
 
 		// admin can init the FeeUpdate account
 		await adminClient.adminInitFeeUpdate(commonVaultKey, { noLut: true });
 
 		vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.feeUpdateStatus).toEqual(FeeUpdateStatus.None);
+		expect(vaultAcct.feeUpdateStatus).to.eql(FeeUpdateStatus.None);
 
 		expect(
 			await bankrunContextWrapper.connection.getAccountInfo(feeUpdate)
-		).not.toBeNull();
+		).to.not.equal(null);
 	});
 
 	it('manager can lower fee from normal update', async () => {
 		let vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.managementFee.toNumber()).toEqual(
+		expect(vaultAcct.managementFee.toNumber()).to.eql(
 			TWENTY_PCT_FEE.toNumber()
 		);
-		expect(vaultAcct.profitShare).toEqual(TWENTY_PCT_FEE.toNumber());
-		expect(vaultAcct.hurdleRate).toEqual(TEN_PCT_FEE.toNumber());
+		expect(vaultAcct.profitShare).to.eql(TWENTY_PCT_FEE.toNumber());
+		expect(vaultAcct.hurdleRate).to.eql(TEN_PCT_FEE.toNumber());
 
 		await managerClient.managerUpdateVault(
 			commonVaultKey,
@@ -389,18 +390,18 @@ describe('feeUpdate', () => {
 		);
 
 		vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.managementFee.toNumber()).toEqual(TEN_PCT_FEE.toNumber());
-		expect(vaultAcct.profitShare).toEqual(TEN_PCT_FEE.toNumber());
-		expect(vaultAcct.hurdleRate).toEqual(TWENTY_PCT_FEE.toNumber());
+		expect(vaultAcct.managementFee.toNumber()).to.eql(TEN_PCT_FEE.toNumber());
+		expect(vaultAcct.profitShare).to.eql(TEN_PCT_FEE.toNumber());
+		expect(vaultAcct.hurdleRate).to.eql(TWENTY_PCT_FEE.toNumber());
 	});
 
 	it('manager cannot raise fee from normal update', async () => {
 		let vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.managementFee.toNumber()).toEqual(
+		expect(vaultAcct.managementFee.toNumber()).to.eql(
 			TWENTY_PCT_FEE.toNumber()
 		);
-		expect(vaultAcct.profitShare).toEqual(TWENTY_PCT_FEE.toNumber());
-		expect(vaultAcct.hurdleRate).toEqual(TEN_PCT_FEE.toNumber());
+		expect(vaultAcct.profitShare).to.eql(TWENTY_PCT_FEE.toNumber());
+		expect(vaultAcct.hurdleRate).to.eql(TEN_PCT_FEE.toNumber());
 
 		try {
 			await managerClient.managerUpdateVault(
@@ -416,26 +417,26 @@ describe('feeUpdate', () => {
 				},
 				{ noLut: true }
 			);
-			fail('should not get here');
+			assert(false, 'should not get here');
 		} catch (e) {
-			expect(e).toBeDefined();
+			expect(e).to.not.equal(undefined);
 		}
 
 		vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.managementFee.toNumber()).toEqual(
+		expect(vaultAcct.managementFee.toNumber()).to.eql(
 			TWENTY_PCT_FEE.toNumber()
 		);
-		expect(vaultAcct.profitShare).toEqual(TWENTY_PCT_FEE.toNumber());
-		expect(vaultAcct.hurdleRate).toEqual(TEN_PCT_FEE.toNumber());
+		expect(vaultAcct.profitShare).to.eql(TWENTY_PCT_FEE.toNumber());
+		expect(vaultAcct.hurdleRate).to.eql(TEN_PCT_FEE.toNumber());
 	});
 
 	it('manager must choose timelock duration greater than 2x redeem period and 1 week', async () => {
 		const vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.managementFee.toNumber()).toEqual(
+		expect(vaultAcct.managementFee.toNumber()).to.eql(
 			TWENTY_PCT_FEE.toNumber()
 		);
-		expect(vaultAcct.profitShare).toEqual(TWENTY_PCT_FEE.toNumber());
-		expect(vaultAcct.hurdleRate).toEqual(TEN_PCT_FEE.toNumber());
+		expect(vaultAcct.profitShare).to.eql(TWENTY_PCT_FEE.toNumber());
+		expect(vaultAcct.hurdleRate).to.eql(TEN_PCT_FEE.toNumber());
 
 		const timelockDuration = ONE_WEEK_S.divn(2);
 
@@ -450,19 +451,19 @@ describe('feeUpdate', () => {
 				},
 				{ noLut: true }
 			);
-			fail('should not get here');
+			assert(false, 'should not get here');
 		} catch (e) {
-			expect(e).toBeDefined();
+			expect(e).to.not.equal(undefined);
 		}
 	});
 
 	it('manager can raise fee through timelock', async () => {
 		let vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.managementFee.toNumber()).toEqual(
+		expect(vaultAcct.managementFee.toNumber()).to.eql(
 			TWENTY_PCT_FEE.toNumber()
 		);
-		expect(vaultAcct.profitShare).toEqual(TWENTY_PCT_FEE.toNumber());
-		expect(vaultAcct.hurdleRate).toEqual(TEN_PCT_FEE.toNumber());
+		expect(vaultAcct.profitShare).to.eql(TWENTY_PCT_FEE.toNumber());
+		expect(vaultAcct.hurdleRate).to.eql(TEN_PCT_FEE.toNumber());
 
 		const timelockDuration = ONE_WEEK_S;
 
@@ -486,21 +487,21 @@ describe('feeUpdate', () => {
 			vaultProgram
 		);
 
-		expect(events.length).toEqual(1);
-		expect(getVariant(events[0].data.action)).toEqual('pending');
+		expect(events.length).to.eql(1);
+		expect(getVariant(events[0].data.action)).to.eql('pending');
 		const ts = events[0].data.ts;
 		const timeLockEndTs = events[0].data.timelockEndTs;
-		expect(timeLockEndTs.sub(ts).toNumber()).toEqual(
+		expect(timeLockEndTs.sub(ts).toNumber()).to.eql(
 			timelockDuration.toNumber()
 		);
 
 		vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.managementFee.toNumber()).toEqual(
+		expect(vaultAcct.managementFee.toNumber()).to.eql(
 			TWENTY_PCT_FEE.toNumber()
 		);
-		expect(vaultAcct.profitShare).toEqual(TWENTY_PCT_FEE.toNumber());
-		expect(vaultAcct.hurdleRate).toEqual(TEN_PCT_FEE.toNumber());
-		expect(vaultAcct.feeUpdateStatus).toEqual(FeeUpdateStatus.PendingFeeUpdate);
+		expect(vaultAcct.profitShare).to.eql(TWENTY_PCT_FEE.toNumber());
+		expect(vaultAcct.hurdleRate).to.eql(TEN_PCT_FEE.toNumber());
+		expect(vaultAcct.feeUpdateStatus).to.eql(FeeUpdateStatus.PendingFeeUpdate);
 
 		// user deposits after 1 day, new fee should come into effect
 		await bankrunContextWrapper.moveTimeForward(ONE_WEEK_S.toNumber());
@@ -524,14 +525,14 @@ describe('feeUpdate', () => {
 			vaultProgram
 		);
 		const feeUpdateEvent = events1.find((e) => e.name === 'feeUpdateRecord');
-		expect(feeUpdateEvent).not.toBeNull();
-		expect(getVariant(feeUpdateEvent?.data.action)).toEqual('applied');
+		expect(feeUpdateEvent).to.not.equal(null);
+		expect(getVariant(feeUpdateEvent?.data.action)).to.eql('applied');
 
 		vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.managementFee.toNumber()).toEqual(TEN_PCT_FEE.toNumber());
-		expect(vaultAcct.profitShare).toEqual(TEN_PCT_FEE.toNumber());
-		expect(vaultAcct.hurdleRate).toEqual(TWENTY_PCT_FEE.toNumber());
-		expect(vaultAcct.feeUpdateStatus).toEqual(FeeUpdateStatus.None);
+		expect(vaultAcct.managementFee.toNumber()).to.eql(TEN_PCT_FEE.toNumber());
+		expect(vaultAcct.profitShare).to.eql(TEN_PCT_FEE.toNumber());
+		expect(vaultAcct.hurdleRate).to.eql(TWENTY_PCT_FEE.toNumber());
+		expect(vaultAcct.feeUpdateStatus).to.eql(FeeUpdateStatus.None);
 	});
 
 	it('manager can cancel fee updates', async () => {
@@ -552,12 +553,12 @@ describe('feeUpdate', () => {
 		);
 
 		vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.feeUpdateStatus).toEqual(FeeUpdateStatus.PendingFeeUpdate);
+		expect(vaultAcct.feeUpdateStatus).to.eql(FeeUpdateStatus.PendingFeeUpdate);
 
 		await managerClient.managerCancelFeeUpdate(commonVaultKey, { noLut: true });
 
 		vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.feeUpdateStatus).toEqual(FeeUpdateStatus.None);
+		expect(vaultAcct.feeUpdateStatus).to.eql(FeeUpdateStatus.None);
 	});
 
 	it('admin can delete fee update account', async () => {
@@ -566,6 +567,6 @@ describe('feeUpdate', () => {
 
 		await adminClient.adminDeleteFeeUpdate(commonVaultKey, { noLut: true });
 		vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.feeUpdateStatus).toEqual(FeeUpdateStatus.None);
+		expect(vaultAcct.feeUpdateStatus).to.eql(FeeUpdateStatus.None);
 	});
 });

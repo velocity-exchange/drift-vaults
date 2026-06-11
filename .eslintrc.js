@@ -3,7 +3,8 @@ module.exports = {
 	"parser": "@typescript-eslint/parser",
 	"env": {
 		"browser": true,
-		"node": true
+		"node": true,
+		"mocha": true
 	},
 	"ignorePatterns": ["**/lib", "**/node_modules", "migrations"],
 	"plugins": [],

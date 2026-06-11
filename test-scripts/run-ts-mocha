@@ -1,0 +1,3 @@
+#!/bin/sh
+# Single-file runner: ANCHOR_TEST_FILE=velocityVaults.ts ./test-scripts/run-ts-mocha
+bunx ts-mocha -p tsconfig.json --exit -t 1000000 ./tests/${ANCHOR_TEST_FILE}

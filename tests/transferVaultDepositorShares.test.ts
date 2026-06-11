@@ -1,5 +1,5 @@
+import { expect } from 'chai';
 import { BN, Program } from '@coral-xyz/anchor';
-import { describe, it } from '@jest/globals';
 import { BankrunContextWrapper } from './common/bankrunConnection';
 import { startAnchor } from 'solana-bankrun';
 import {
@@ -279,7 +279,7 @@ describe('transferVaultDepositorShares', () => {
 		);
 
 		const transferAmount = vd1Before.vaultShares.divn(2);
-		expect(transferAmount.gtn(0)).toBe(true);
+		expect(transferAmount.gtn(0)).to.equal(true);
 
 		await user1Client.transferVaultDepositorShares(
 			user1VaultDepositor,
@@ -298,17 +298,17 @@ describe('transferVaultDepositorShares', () => {
 		);
 
 		// shares moved from user1 to user2
-		expect(vd1After.vaultShares.lt(vd1Before.vaultShares)).toBe(true);
-		expect(vd2After.vaultShares.gt(vd2Before.vaultShares)).toBe(true);
+		expect(vd1After.vaultShares.lt(vd1Before.vaultShares)).to.equal(true);
+		expect(vd2After.vaultShares.gt(vd2Before.vaultShares)).to.equal(true);
 
 		// total shares in vault unchanged
-		expect(vaultAfter.totalShares.eq(vaultBefore.totalShares)).toBe(true);
-		expect(vaultAfter.userShares.eq(vaultBefore.userShares)).toBe(true);
+		expect(vaultAfter.totalShares.eq(vaultBefore.totalShares)).to.equal(true);
+		expect(vaultAfter.userShares.eq(vaultBefore.userShares)).to.equal(true);
 
 		// combined depositor shares unchanged
 		const combinedBefore = vd1Before.vaultShares.add(vd2Before.vaultShares);
 		const combinedAfter = vd1After.vaultShares.add(vd2After.vaultShares);
-		expect(combinedAfter.eq(combinedBefore)).toBe(true);
+		expect(combinedAfter.eq(combinedBefore)).to.equal(true);
 	});
 
 	it('transfer all shares from user1 to user2', async () => {
@@ -320,7 +320,7 @@ describe('transferVaultDepositorShares', () => {
 		);
 
 		const allShares = vd1Before.vaultShares;
-		expect(allShares.gtn(0)).toBe(true);
+		expect(allShares.gtn(0)).to.equal(true);
 
 		await user1Client.transferVaultDepositorShares(
 			user1VaultDepositor,
@@ -338,11 +338,11 @@ describe('transferVaultDepositorShares', () => {
 		);
 
 		// user1 has 0 shares
-		expect(vd1After.vaultShares.eqn(0)).toBe(true);
+		expect(vd1After.vaultShares.eqn(0)).to.equal(true);
 
 		// user2 has all transferred shares
 		const combinedBefore = vd1Before.vaultShares.add(vd2Before.vaultShares);
-		expect(vd2After.vaultShares.eq(combinedBefore)).toBe(true);
+		expect(vd2After.vaultShares.eq(combinedBefore)).to.equal(true);
 	});
 
 	it('unauthorized transfer fails', async () => {
@@ -360,10 +360,10 @@ describe('transferVaultDepositorShares', () => {
 				WithdrawUnit.SHARES,
 				{ noLut: true }
 			);
-			expect(true).toBe(false); // should not reach here
+			expect(true).to.equal(false); // should not reach here
 		} catch (e) {
 			// expected to fail due to PDA constraint (authority mismatch)
-			expect(e).toBeDefined();
+			expect(e).to.not.equal(undefined);
 		}
 	});
 
@@ -381,9 +381,9 @@ describe('transferVaultDepositorShares', () => {
 				WithdrawUnit.SHARES,
 				{ noLut: true }
 			);
-			expect(true).toBe(false); // should not reach here
+			expect(true).to.equal(false); // should not reach here
 		} catch (e) {
-			expect(e).toBeDefined();
+			expect(e).to.not.equal(undefined);
 		}
 	});
 });

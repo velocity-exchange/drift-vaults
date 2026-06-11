@@ -1,6 +1,6 @@
+import { expect } from 'chai';
 import * as anchor from '@coral-xyz/anchor';
 import { BN, Program } from '@coral-xyz/anchor';
-import { describe, it } from '@jest/globals';
 import { BankrunContextWrapper } from './common/bankrunConnection';
 import { startAnchor } from 'solana-bankrun';
 import {
@@ -199,7 +199,7 @@ describe('velocityVaults', () => {
 			commonVaultKey
 		);
 
-		expect(vault0.manager.toString()).not.toEqual(vault1.manager.toString());
-		expect(vault1.manager.toString()).toEqual(newManager.publicKey.toString());
+		expect(vault0.manager.toString()).to.not.eql(vault1.manager.toString());
+		expect(vault1.manager.toString()).to.eql(newManager.publicKey.toString());
 	});
 });

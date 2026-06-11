@@ -31,3 +31,5 @@ filename = "./tests/fixtures/metaplex/PwDiXFxQsGra4sFFTT8r1QWRMd4vfumiWC1jfWNfdY
 
 [scripts]
 test = "bun run anchor-tests"
+lint = "bun run prettify:fix && cargo fmt"
+fulltest = "cargo test && ./test.sh"

@@ -1,6 +1,6 @@
+import { expect } from 'chai';
 import * as anchor from '@coral-xyz/anchor';
 import { BN, Program } from '@coral-xyz/anchor';
-import { describe, it } from '@jest/globals';
 import { BankrunContextWrapper } from './common/bankrunConnection';
 import { startAnchor } from 'solana-bankrun';
 import {
@@ -228,7 +228,7 @@ describe('velocityVaults', () => {
 			await bankrunContextWrapper.connection.getTokenAccountBalance(
 				user1UserUSDCAccount
 			);
-		expect(Number(user1TokenBalance0.amount)).toEqual(usdcAmount.toNumber());
+		expect(Number(user1TokenBalance0.amount)).to.eql(usdcAmount.toNumber());
 
 		await user1Client.deposit(
 			user1VaultDepositor,
@@ -247,14 +247,14 @@ describe('velocityVaults', () => {
 			commonVaultKey
 		);
 
-		expect(vault0.totalShares.toNumber()).toEqual(0);
-		expect(vault1.totalShares.toNumber()).toEqual(vault1.maxTokens.toNumber());
+		expect(vault0.totalShares.toNumber()).to.eql(0);
+		expect(vault1.totalShares.toNumber()).to.eql(vault1.maxTokens.toNumber());
 
 		const user1TokenBalance1 =
 			await bankrunContextWrapper.connection.getTokenAccountBalance(
 				user1UserUSDCAccount
 			);
-		expect(Number(user1TokenBalance1.amount)).toEqual(
+		expect(Number(user1TokenBalance1.amount)).to.eql(
 			usdcAmount.divn(2).toNumber()
 		);
 	});

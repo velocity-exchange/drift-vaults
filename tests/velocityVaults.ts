@@ -1,3 +1,4 @@
+import { expect } from 'chai';
 import * as anchor from '@coral-xyz/anchor';
 import { Program } from '@coral-xyz/anchor';
 import {
@@ -60,7 +61,6 @@ import {
 	LAMPORTS_PER_SOL,
 	Signer,
 } from '@solana/web3.js';
-import { describe, beforeAll, afterAll, it } from '@jest/globals';
 import {
 	VaultClient,
 	getTokenizedVaultMintAddressSync,
@@ -189,7 +189,7 @@ describe('velocityVaults', () => {
 
 	const usdcAmount = new BN(1_000).mul(QUOTE_PRECISION);
 
-	beforeAll(async () => {
+	before(async () => {
 		while (!adminInitialized || !(await isVelocityInitialized(adminClient))) {
 			console.log('TestVelocityVaults: waiting for AdminClient...');
 			await sleep(1000);
@@ -271,7 +271,7 @@ describe('velocityVaults', () => {
 		await bulkAccountLoader.load();
 	});
 
-	afterAll(async () => {
+	after(async () => {
 		bulkAccountLoader.stopPolling();
 
 		await adminClient.unsubscribe();
@@ -494,7 +494,7 @@ describe('TestProtocolVaults', () => {
 	const usdcAmount = new BN(1_000).mul(QUOTE_PRECISION);
 	const baseAssetAmount = new BN(1).mul(BASE_PRECISION);
 
-	beforeAll(async () => {
+	before(async () => {
 		while (!adminInitialized || !(await isVelocityInitialized(adminClient))) {
 			console.log('TestProtocolVault: waiting for AdminClient...');
 			await sleep(1000);
@@ -645,7 +645,7 @@ describe('TestProtocolVaults', () => {
 		await bulkAccountLoader.load();
 	});
 
-	afterAll(async () => {
+	after(async () => {
 		bulkAccountLoader.stopPolling();
 
 		await adminClient.unsubscribe();
@@ -939,7 +939,7 @@ describe('TestProtocolVaults', () => {
 			);
 		} catch (e) {
 			console.error('failed to move amm price:', e);
-			fail('failed to move amm price');
+			assert(false, 'failed to move amm price');
 		}
 
 		const solPerpMarket = adminClient.getPerpMarketAccount(0);
@@ -953,13 +953,13 @@ describe('TestProtocolVaults', () => {
 			);
 		} catch (e) {
 			console.error('failed to set feed price:', e);
-			fail('failed to set feed price');
+			assert(false, 'failed to set feed price');
 		}
 
 		const postOD = adminClient.getOracleDataForPerpMarket(0);
 		const priceAfter = postOD.price.toNumber() / PRICE_PRECISION.toNumber();
 		const diff = Math.abs(priceAfter - finalSolPerpPrice);
-		expect(diff).toBeLessThan(0.00001);
+		expect(diff).to.be.lessThan(0.00001);
 	});
 
 	// vault exits long for a profit
@@ -1466,7 +1466,7 @@ describe('TestTokenizedVelocityVaults', () => {
 	);
 	let firstVaultInitd = false;
 
-	beforeAll(async () => {
+	before(async () => {
 		while (!adminInitialized) {
 			console.log(
 				'TestTokenizedVelocityVaults: waiting for velocity initialization...'
@@ -1557,7 +1557,7 @@ describe('TestTokenizedVelocityVaults', () => {
 		await bulkAccountLoader.load();
 	});
 
-	afterAll(async () => {
+	after(async () => {
 		// Restore the SOL oracle (which the rebase test crashes to drive equity below the
 		// rebase threshold). Subsequent describe blocks share the same Pyth feed; without
 		// this, manager-cancel-withdraw and others see a stale crashed price even when this
@@ -1569,7 +1569,7 @@ describe('TestTokenizedVelocityVaults', () => {
 				solPerpOracle
 			);
 		} catch (e) {
-			console.error('failed to restore SOL oracle in afterAll:', e);
+			console.error('failed to restore SOL oracle in after hook:', e);
 		}
 
 		bulkAccountLoader.stopPolling();
@@ -3030,7 +3030,7 @@ describe('TestInsuranceFundStake', () => {
 	const commonVaultName = 'vault with IF';
 	let firstVaultInitd = false;
 
-	beforeAll(async () => {
+	before(async () => {
 		while (!adminInitialized) {
 			console.log(
 				'TestInsuranceFundStake: waiting for velocity initialization...'
@@ -3132,7 +3132,7 @@ describe('TestInsuranceFundStake', () => {
 		await vd1VelocityClient.subscribe();
 	});
 
-	afterAll(async () => {
+	after(async () => {
 		bulkAccountLoader.stopPolling();
 
 		await adminClient.unsubscribe();
@@ -3355,7 +3355,7 @@ describe('TestSOLDenomindatedVault', () => {
 	);
 	let firstVaultInitd = false;
 
-	beforeAll(async () => {
+	before(async () => {
 		while (!adminInitialized) {
 			console.log(
 				'TestTokenizedVelocityVaults: waiting for velocity initialization...'
@@ -3425,7 +3425,7 @@ describe('TestSOLDenomindatedVault', () => {
 		await bulkAccountLoader.load();
 	});
 
-	afterAll(async () => {
+	after(async () => {
 		bulkAccountLoader.stopPolling();
 
 		await adminClient.unsubscribe();
@@ -3555,7 +3555,7 @@ describe('TestWithdrawFromVaults', () => {
 
 	const VAULT_PROTOCOL_DISCRIM: number[] = [106, 130, 5, 195, 126, 82, 249, 53];
 
-	beforeAll(async () => {
+	before(async () => {
 		while (!adminInitialized) {
 			console.log(
 				'TestTokenizedVelocityVaults: waiting for velocity initialization...'
@@ -3689,7 +3689,7 @@ describe('TestWithdrawFromVaults', () => {
 		await bulkAccountLoader.load();
 	});
 
-	afterAll(async () => {
+	after(async () => {
 		bulkAccountLoader.stopPolling();
 
 		await adminClient.unsubscribe();

@@ -68,7 +68,45 @@ import {
 	VaultClient,
 } from '../../ts/sdk/lib';
 import { Metaplex } from '@metaplex-foundation/js';
-import 'jest-expect-message';
+import { expect, use as chaiUse } from 'chai';
+
+// Teach chai's deep-eql about BN and PublicKey: equal values can carry
+// differently-padded internal word arrays, so structural comparison gives
+// false negatives. Defer to the types' own equality methods instead.
+chaiUse((c) => {
+	c.Assertion.overwriteMethod('eql', function (_super) {
+		return function (this: any, expected: any) {
+			const actual = this._obj;
+			if (BN.isBN(actual) && BN.isBN(expected)) {
+				this.assert(
+					actual.eq(expected),
+					'expected #{act} to equal #{exp}',
+					'expected #{act} to not equal #{exp}',
+					expected.toString(),
+					actual.toString()
+				);
+				return;
+			}
+			// Duck-typed PublicKey check: multiple @solana/web3.js copies can
+			// coexist in the tree, so instanceof is unreliable.
+			if (
+				typeof actual?.toBase58 === 'function' &&
+				typeof expected?.toBase58 === 'function'
+			) {
+				this.assert(
+					actual.toBase58() === expected.toBase58(),
+					'expected #{act} to equal #{exp}',
+					'expected #{act} to not equal #{exp}',
+					expected.toBase58(),
+					actual.toBase58()
+				);
+				return;
+			}
+			// eslint-disable-next-line prefer-rest-params
+			_super.apply(this, arguments);
+		};
+	});
+});
 import { BankrunContextWrapper } from './bankrunConnection';
 import { BankrunProvider } from 'anchor-bankrun';
 
@@ -1753,7 +1791,7 @@ export const isVersionedTransaction = (
 };
 
 export function assert(condition: boolean, message = '') {
-	expect(condition, message).toBe(true);
+	expect(condition, message).to.equal(true);
 }
 
 export async function mockUSDCMintBankrun(

@@ -24,23 +24,24 @@ The pre-anchor1 `.cargo/config.toml` (which forced vendored-sources from a missi
 
 ## Common commands
 
-Build + run the full anchor test suite (spins up `anchor localnet` in the background, runs jest against it):
+Build + run the full test suite (ts-mocha, one process per test file):
 
 ```
 ./test.sh                 # full: build + test
 ./test.sh --no-build      # reuse last build
-./test.sh --detach        # keep validator running after tests
 ```
 
-Under the hood, `test.sh` calls `build.sh --anchor-test` (which does `anchor build --ignore-keys -- --features anchor-test`) then `bun run anchor-tests`. The `--ignore-keys` flag is required in Anchor 1.0.
+Under the hood, `test.sh` calls `build.sh --anchor-test` (which does `anchor build --ignore-keys -- --features anchor-test`) then `test-scripts/run-anchor-tests.sh --skip-build`. The `--ignore-keys` flag is required in Anchor 1.0. No separate validator needed: the bankrun suites run an in-process banks server, and for `velocityVaults.ts` (the one suite that needs real RPC — websockets, metaplex, airdrops) the script starts and stops its own local validator. If something is already listening on 8899 it reuses it (beware dirty state — tests assume fresh genesis).
 
-Run a single jest test file:
+Run a single test file:
 
 ```
-ANCHOR_WALLET=~/.config/solana/id.json bun run jest --runInBand --forceExit tests/velocityVaults.ts
+ANCHOR_TEST_FILE=velocityVaults.ts ./test-scripts/run-ts-mocha
+# or directly:
+bunx ts-mocha -p tsconfig.json --exit -t 1000000 ./tests/feeUpdate.test.ts
 ```
 
-Note: `bun run anchor-tests` copies fresh IDL/types from `target/` into `ts/sdk/src/{idl,types}/` before running jest — if you edit the Rust program, re-run this (not raw `jest`) so the TS SDK sees new types. Or run `bun run program:sync-idl` manually (`bun run program:build` does anchor build + sync in one go).
+Note: `bun run anchor-tests` (= `test-scripts/run-anchor-tests.sh`) copies fresh IDL/types from `target/` into `ts/sdk/src/{idl,types}/` before running tests — if you edit the Rust program, re-run this (not raw `ts-mocha`) so the TS SDK sees new types. Or run `bun run program:sync-idl` manually (`bun run program:build` does anchor build + sync in one go).
 
 Rust unit tests (in-program, no validator): `cargo test` from repo root. There is a large `tests.rs` module in `programs/velocity_vaults/src/` gated on `#[cfg(test)]`.
 
@@ -95,11 +96,11 @@ Withdrawals are two-phase: `request_withdraw` → wait `redeem_period` → `with
 
 ### Tests (`tests/`)
 
-Jest integration tests run against a local validator (started by `test.sh`). `tests/fixtures/` contains the velocity + pyth + metaplex programs and accounts loaded into genesis (see `Anchor.toml`). `velocityVaults.ts` is the broad end-to-end suite; other files target narrower features (fee updates, tokenized shares, trusted vaults, etc.).
+ts-mocha integration tests, one process per file (`test-scripts/run-anchor-tests.sh`). Most suites are bankrun (in-process banks server, no validator); `velocityVaults.ts` is the broad end-to-end suite and runs against a local validator the script manages itself. `tests/fixtures/` contains the velocity + pyth + metaplex programs and accounts loaded into genesis (see `Anchor.toml` and the `--bpf-program` flags in `test-scripts/run-anchor-tests.sh`). Other files target narrower features (fee updates, tokenized shares, trusted vaults, etc.).
 
 ## Gotchas
 
-- After editing the Rust program, the TS side will look stale until IDL/types are regenerated. `bun run anchor-tests` handles this; raw `jest` does not.
+- After editing the Rust program, the TS side will look stale until IDL/types are regenerated. `bun run anchor-tests` handles this; raw `ts-mocha` does not.
 - `anchor build --ignore-keys` must run with `--features anchor-test` for the integration test suite (done by `build.sh --anchor-test`). Unit tests (`cargo test`) use `#[cfg(test)]` gating independently.
 - One fixture-based unit test (`apply_profit_share_on_net_hwm_example`) is `#[ignore]`d — its base64 Vault bytes encode the pre-reorder layout. Re-capture the fixture if/when you need it.
 - The macOS "blockstore error" on `anchor test` is fixed by installing `gnu-tar` and putting it ahead of BSD tar on `PATH` (see README).
