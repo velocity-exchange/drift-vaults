@@ -483,7 +483,7 @@ export async function initializeSolSpotMarketMaker(
 	const isPerp = isVariant(mmMarketType, 'perp');
 	const marketIndex = isPerp ? 0 : 1;
 	const tickSize = isPerp
-		? velocityClient.getPerpMarketAccount(marketIndex)!.amm.orderTickSize
+		? velocityClient.getPerpMarketAccount(marketIndex)!.orderTickSize
 		: solMarket.orderTickSize;
 	const oracleFn = isPerp
 		? () => velocityClient.getOracleDataForPerpMarket(marketIndex)
@@ -1568,6 +1568,13 @@ export async function doWashTrading({
 				throw new Error(
 					`No oracle for ${marketTypeVariant} market at idx ${marketIndex}, misconfigured?`
 				);
+			}
+
+			// Re-crank the AMM so its reference price tracks the oracle. After a
+			// big oracle move the stale AMM spread overflows BID_ASK_SPREAD_PRECISION
+			// and fills abort with InvalidAmmDetected (vlp/amm/math/spread.rs).
+			if (isPerp) {
+				await mmVelocityClient.updateAMMs([marketIndex]);
 			}
 			const oraclePrice = convertToNumber(oracle.price, PRICE_PRECISION);
 

@@ -949,7 +949,7 @@ describe('TestProtocolVaults', () => {
 			await setFeedPrice(
 				anchor.workspace.Pyth,
 				finalSolPerpPrice,
-				solPerpMarket!.amm.oracle
+				solPerpMarket!.oracle
 			);
 		} catch (e) {
 			console.error('failed to set feed price:', e);
@@ -1120,17 +1120,30 @@ describe('TestProtocolVaults', () => {
 		await delegateClient.velocityClient.fetchAccounts();
 
 		try {
+			// post price-move settles require the AMM to be refreshed in the
+			// same slot (AMMNotUpdatedInSameSlot), so bundle an updateAmms ix
+			// in front of each settle ix. (settlePNL's optionalIxs param only
+			// works for versioned txs; this client uses legacy, so build manually.)
+			const settleWithAmmCrank = async (
+				userKey: PublicKey,
+				userAccount: UserAccount
+			) => {
+				const client = delegateClient.velocityClient;
+				const tx = await client.buildTransaction([
+					await client.getUpdateAMMsIx([0]),
+					await client.settlePNLIx(userKey, userAccount, 0),
+				]);
+				await client.sendTransaction(tx, [], client.opts);
+			};
 			// settle market maker who lost trade and pays taker fees
-			await delegateClient.velocityClient.settlePNL(
+			await settleWithAmmCrank(
 				fillerUser.userAccountPublicKey,
-				fillerUser.getUserAccount(),
-				0
+				fillerUser.getUserAccount()
 			);
 			// then settle vault who won trade and earns maker fees
-			await delegateClient.velocityClient.settlePNL(
+			await settleWithAmmCrank(
 				vaultUser.userAccountPublicKey,
-				vaultUser.getUserAccount(),
-				0
+				vaultUser.getUserAccount()
 			);
 		} catch (e) {
 			console.log('failed to settle pnl:', e);
@@ -3950,7 +3963,7 @@ describe('TestWithdrawFromVaults', () => {
 			await setFeedPrice(
 				anchor.workspace.Pyth,
 				newOraclePrice,
-				solPerpMarket.amm.oracle
+				solPerpMarket.oracle
 			);
 
 			await managerVelocityClient.fetchAccounts();
