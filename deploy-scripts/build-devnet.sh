@@ -1,1 +1,1 @@
-anchor build -- --features "drift/cpi"  --no-default-features
+anchor build -- --features "velocity/cpi"  --no-default-features

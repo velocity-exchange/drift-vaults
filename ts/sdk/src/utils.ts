@@ -1,10 +1,10 @@
 import { AnchorProvider } from '@coral-xyz/anchor';
-import { DriftClient, IWallet } from '@velocity-exchange/sdk';
+import { VelocityClient, IWallet } from '@velocity-exchange/sdk';
 import { Connection, PublicKey, TransactionInstruction } from '@solana/web3.js';
-import { DriftVaults } from './types/drift_vaults';
-import driftVaultsIDL from './idl/drift_vaults.json';
+import { VelocityVaults } from './types/velocity_vaults';
+import velocityVaultsIDL from './idl/velocity_vaults.json';
 
-export const IDL = driftVaultsIDL as DriftVaults;
+export const IDL = velocityVaultsIDL as VelocityVaults;
 import { VaultClient } from './vaultClient';
 import * as anchor from '@coral-xyz/anchor';
 import {
@@ -12,14 +12,14 @@ import {
 	getAssociatedTokenAddress,
 } from '@solana/spl-token';
 
-export const getDriftVaultProgram = (
+export const getVelocityVaultProgram = (
 	connection: Connection,
 	wallet: IWallet
-): anchor.Program<DriftVaults> => {
+): anchor.Program<VelocityVaults> => {
 	const provider = new AnchorProvider(connection, wallet as anchor.Wallet, {});
 	anchor.setProvider(provider);
-	const vaultProgram = new anchor.Program<DriftVaults>(
-		driftVaultsIDL as DriftVaults,
+	const vaultProgram = new anchor.Program<VelocityVaults>(
+		velocityVaultsIDL as VelocityVaults,
 		provider
 	);
 
@@ -29,12 +29,12 @@ export const getDriftVaultProgram = (
 export const getVaultClient = (
 	connection: Connection,
 	wallet: IWallet,
-	driftClient: DriftClient
+	velocityClient: VelocityClient
 ): VaultClient => {
-	const vaultProgram = getDriftVaultProgram(connection, wallet);
+	const vaultProgram = getVelocityVaultProgram(connection, wallet);
 
 	const vaultClient = new VaultClient({
-		driftClient,
+		velocityClient,
 		program: vaultProgram,
 	});
 

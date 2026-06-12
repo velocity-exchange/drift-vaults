@@ -2,8 +2,8 @@
 anchor_version = "1.0.0"
 
 [programs.localnet]
-drift_vaults = "vAuLTsyrvSfZRuRB3XgvkPwNGgYSs9YRYymVebLKoxR"
-drift = "vELoC1audYbSYVRXn1vPaV8Axoa9oU6BYmNGZZBDZ1P"
+velocity_vaults = "vAuLTsyrvSfZRuRB3XgvkPwNGgYSs9YRYymVebLKoxR"
+velocity = "vELoC1audYbSYVRXn1vPaV8Axoa9oU6BYmNGZZBDZ1P"
 pyth = "gSbePebfvPy7tRqimPoVecS2UsBvYv46ynrzWocc92s"
 
 [registry]
@@ -15,7 +15,7 @@ wallet = "~/.config/solana/id.json"
 
 [[test.genesis]]
 address = "vELoC1audYbSYVRXn1vPaV8Axoa9oU6BYmNGZZBDZ1P"
-program = "./tests/fixtures/drift.so"
+program = "./tests/fixtures/velocity.so"
 
 [[test.genesis]]
 address = "gSbePebfvPy7tRqimPoVecS2UsBvYv46ynrzWocc92s"
@@ -30,4 +30,6 @@ address = "PwDiXFxQsGra4sFFTT8r1QWRMd4vfumiWC1jfWNfdYT"
 filename = "./tests/fixtures/metaplex/PwDiXFxQsGra4sFFTT8r1QWRMd4vfumiWC1jfWNfdYT.json"
 
 [scripts]
-test = "yarn anchor-tests"
+test = "bun run anchor-tests"
+lint = "bun run prettify:fix && cargo fmt"
+fulltest = "cargo test && ./test.sh"

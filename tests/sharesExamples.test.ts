@@ -1,6 +1,6 @@
+import { expect } from 'chai';
 import * as anchor from '@coral-xyz/anchor';
 import { BN, Program } from '@coral-xyz/anchor';
-import { describe, it } from '@jest/globals';
 import { BankrunContextWrapper } from './common/bankrunConnection';
 import { startAnchor } from 'solana-bankrun';
 import {
@@ -8,15 +8,15 @@ import {
 	getVaultAddressSync,
 	getVaultDepositorAddressSync,
 	encodeName,
-	DriftVaults,
+	VelocityVaults,
 	VAULT_PROGRAM_ID,
 	IDL,
 	WithdrawUnit,
 } from '../ts/sdk/lib';
 import {
 	BulkAccountLoader,
-	DRIFT_PROGRAM_ID,
-	DriftClient,
+	VELOCITY_PROGRAM_ID,
+	VelocityClient,
 	OracleSource,
 	PEG_PRECISION,
 	PERCENTAGE_PRECISION,
@@ -43,10 +43,10 @@ const mantissaSqrtScale = new BN(100_000);
 const ammInitialQuoteAssetReserve = new BN(5 * 10 ** 13).mul(mantissaSqrtScale);
 const ammInitialBaseAssetReserve = new BN(5 * 10 ** 13).mul(mantissaSqrtScale);
 
-describe('driftVaults', () => {
-	let vaultProgram: Program<DriftVaults>;
+describe('velocityVaults', () => {
+	let vaultProgram: Program<VelocityVaults>;
 	const initialSolPerpPrice = 100;
-	let adminDriftClient: TestClient;
+	let adminVelocityClient: TestClient;
 	let bulkAccountLoader: TestBulkAccountLoader;
 	let bankrunContextWrapper: BankrunContextWrapper;
 	let usdcMint: PublicKey;
@@ -60,19 +60,19 @@ describe('driftVaults', () => {
 
 	const managerSigner = Keypair.generate();
 	let managerClient: VaultClient;
-	let managerDriftClient: DriftClient;
+	let managerVelocityClient: VelocityClient;
 
 	let adminClient: VaultClient;
 
 	const user1Signer = Keypair.generate();
 	let user1Client: VaultClient;
-	let user1DriftClient: DriftClient;
+	let user1VelocityClient: VelocityClient;
 	let user1UserUSDCAccount: PublicKey;
 	let user1VaultDepositor: PublicKey;
 
 	const user2Signer = Keypair.generate();
 	let user2Client: VaultClient;
-	let user2DriftClient: DriftClient;
+	let user2VelocityClient: VelocityClient;
 	let user2UserUSDCAccount: PublicKey;
 	let user2VaultDepositor: PublicKey;
 
@@ -83,7 +83,7 @@ describe('driftVaults', () => {
 			'',
 			[
 				{
-					name: 'drift',
+					name: 'velocity',
 					programId: new PublicKey(
 						'vELoC1audYbSYVRXn1vPaV8Axoa9oU6BYmNGZZBDZ1P'
 					),
@@ -95,7 +95,7 @@ describe('driftVaults', () => {
 		// wrap the context to use it with the test helpers
 		bankrunContextWrapper = new BankrunContextWrapper(context);
 
-		vaultProgram = new Program<DriftVaults>(
+		vaultProgram = new Program<VelocityVaults>(
 			IDL,
 			bankrunContextWrapper.provider
 		);
@@ -113,10 +113,10 @@ describe('driftVaults', () => {
 			initialSolPerpPrice
 		);
 
-		adminDriftClient = new TestClient({
+		adminVelocityClient = new TestClient({
 			connection: bankrunContextWrapper.connection.toConnection(),
 			wallet: bankrunContextWrapper.provider.wallet,
-			programID: new PublicKey(DRIFT_PROGRAM_ID),
+			programID: new PublicKey(VELOCITY_PROGRAM_ID),
 			opts: {
 				commitment: 'confirmed',
 			},
@@ -131,13 +131,13 @@ describe('driftVaults', () => {
 			},
 		});
 
-		await adminDriftClient.initialize(usdcMint, true);
-		await adminDriftClient.subscribe();
+		await adminVelocityClient.initialize(usdcMint, true);
+		await adminVelocityClient.subscribe();
 
-		await initializeQuoteSpotMarket(adminDriftClient, usdcMint);
-		await initializeSolSpotMarket(adminDriftClient, solPerpOracle);
+		await initializeQuoteSpotMarket(adminVelocityClient, usdcMint);
+		await initializeSolSpotMarket(adminVelocityClient, solPerpOracle);
 
-		await adminDriftClient.initializePerpMarket(
+		await adminVelocityClient.initializePerpMarket(
 			0,
 			solPerpOracle,
 			ammInitialBaseAssetReserve,
@@ -147,7 +147,7 @@ describe('driftVaults', () => {
 			OracleSource.PYTH
 		);
 
-		await adminDriftClient.fetchAccounts();
+		await adminVelocityClient.fetchAccounts();
 
 		const managerBootstrap = await bootstrapSignerClientAndUserBankrun({
 			bankrunContext: bankrunContextWrapper,
@@ -156,7 +156,7 @@ describe('driftVaults', () => {
 			usdcMint: usdcMint,
 			usdcAmount,
 			vaultClientCliMode: true,
-			driftClientConfig: {
+			velocityClientConfig: {
 				accountSubscription: {
 					type: 'polling',
 					accountLoader: bulkAccountLoader as BulkAccountLoader,
@@ -169,16 +169,16 @@ describe('driftVaults', () => {
 			},
 		});
 		managerClient = managerBootstrap.vaultClient;
-		managerDriftClient = managerBootstrap.driftClient;
+		managerVelocityClient = managerBootstrap.velocityClient;
 
 		const provider = new BankrunProvider(
 			bankrunContextWrapper.context,
-			adminDriftClient.wallet as anchor.Wallet
+			adminVelocityClient.wallet as anchor.Wallet
 		);
 		const program = new Program(IDL, provider);
 		adminClient = new VaultClient({
 			// @ts-ignore
-			driftClient: adminDriftClient,
+			velocityClient: adminVelocityClient,
 			// @ts-ignore
 			program,
 		});
@@ -190,7 +190,7 @@ describe('driftVaults', () => {
 			usdcMint: usdcMint,
 			usdcAmount,
 			vaultClientCliMode: true,
-			driftClientConfig: {
+			velocityClientConfig: {
 				accountSubscription: {
 					type: 'polling',
 					accountLoader: bulkAccountLoader as BulkAccountLoader,
@@ -203,7 +203,7 @@ describe('driftVaults', () => {
 			},
 		});
 		user1Client = user1Bootstrap.vaultClient;
-		user1DriftClient = user1Bootstrap.driftClient;
+		user1VelocityClient = user1Bootstrap.velocityClient;
 		user1UserUSDCAccount = user1Bootstrap.userUSDCAccount.publicKey;
 		user1VaultDepositor = getVaultDepositorAddressSync(
 			vaultProgram.programId,
@@ -218,7 +218,7 @@ describe('driftVaults', () => {
 			usdcMint: usdcMint,
 			usdcAmount,
 			vaultClientCliMode: true,
-			driftClientConfig: {
+			velocityClientConfig: {
 				accountSubscription: {
 					type: 'polling',
 					accountLoader: bulkAccountLoader as BulkAccountLoader,
@@ -231,7 +231,7 @@ describe('driftVaults', () => {
 			},
 		});
 		user2Client = user2Bootstrap.vaultClient;
-		user2DriftClient = user2Bootstrap.driftClient;
+		user2VelocityClient = user2Bootstrap.velocityClient;
 		user2UserUSDCAccount = user2Bootstrap.userUSDCAccount.publicKey;
 		user2VaultDepositor = getVaultDepositorAddressSync(
 			vaultProgram.programId,
@@ -269,14 +269,14 @@ describe('driftVaults', () => {
 	});
 
 	afterEach(async () => {
-		await adminDriftClient.unsubscribe();
+		await adminVelocityClient.unsubscribe();
 		await adminClient.unsubscribe();
 		await managerClient.unsubscribe();
-		await managerDriftClient.unsubscribe();
+		await managerVelocityClient.unsubscribe();
 		await user1Client.unsubscribe();
-		await user1DriftClient.unsubscribe();
+		await user1VelocityClient.unsubscribe();
 		await user2Client.unsubscribe();
-		await user2DriftClient.unsubscribe();
+		await user2VelocityClient.unsubscribe();
 	});
 
 	it('vaults initialized', async () => {
@@ -298,7 +298,7 @@ describe('driftVaults', () => {
 		);
 		// console.log(vd1.vaultShares.toString());
 
-		await user1DriftClient.fetchAccounts();
+		await user1VelocityClient.fetchAccounts();
 
 		let vaultEquity = await managerClient.calculateVaultEquity({
 			// address: commonVaultKey,
@@ -327,14 +327,14 @@ describe('driftVaults', () => {
 		// console.log('vault2 shares', vd2.vaultShares.toString());
 
 		await user2Client.syncVaultUsers();
-		await user2DriftClient.fetchAccounts();
+		await user2VelocityClient.fetchAccounts();
 
 		vaultEquity = await user2Client.calculateVaultEquity({
 			address: commonVaultKey,
 		});
 		// console.log('vault equity', vaultEquity.toString());
 
-		expect(vaultEquity.toString()).toBe('300000000000');
+		expect(vaultEquity.toString()).to.equal('300000000000');
 
 		// console.log(vault.user);
 
@@ -365,11 +365,11 @@ describe('driftVaults', () => {
 		vaultEquity = await user2Client.calculateVaultEquity({
 			address: commonVaultKey,
 		});
-		expect(vaultEquity.toString()).toBe('330000000000');
+		expect(vaultEquity.toString()).to.equal('330000000000');
 
 		// user1 requests 100% withdraw
 		await user1Client.syncVaultUsers();
-		await user1DriftClient.fetchAccounts();
+		await user1VelocityClient.fetchAccounts();
 		await user1Client.requestWithdraw(
 			user1VaultDepositor,
 			PERCENTAGE_PRECISION,
@@ -388,7 +388,7 @@ describe('driftVaults', () => {
 		vaultEquity = await user2Client.calculateVaultEquity({
 			address: commonVaultKey,
 		});
-		expect(vaultEquity.toString()).toBe('363000000000');
+		expect(vaultEquity.toString()).to.equal('363000000000');
 
 		await user1Client.cancelRequestWithdraw(user1VaultDepositor, {
 			noLut: true,
@@ -413,11 +413,11 @@ describe('driftVaults', () => {
 		vaultEquity = await user2Client.calculateVaultEquity({
 			address: commonVaultKey,
 		});
-		expect(vaultEquity.toString()).toBe('326700000000');
+		expect(vaultEquity.toString()).to.equal('326700000000');
 
 		// user1 requests 100% withdraw
 		await user1Client.syncVaultUsers();
-		await user1DriftClient.fetchAccounts();
+		await user1VelocityClient.fetchAccounts();
 		const tx0 = await user1Client.requestWithdraw(
 			user1VaultDepositor,
 			PERCENTAGE_PRECISION,
@@ -439,11 +439,11 @@ describe('driftVaults', () => {
 		vaultEquity = await user2Client.calculateVaultEquity({
 			address: commonVaultKey,
 		});
-		expect(vaultEquity.toString()).toBe('163350000000');
+		expect(vaultEquity.toString()).to.equal('163350000000');
 		await bankrunContextWrapper.moveTimeForward(1000);
 
 		await user1Client.syncVaultUsers();
-		await user1DriftClient.fetchAccounts();
+		await user1VelocityClient.fetchAccounts();
 		const tx = await user1Client.withdraw(user1VaultDepositor, { noLut: true });
 		await printTxLogs(
 			bankrunContextWrapper.connection.toConnection(),
@@ -460,19 +460,19 @@ describe('driftVaults', () => {
 			user1VaultDepositor
 		);
 		// console.log('vd1', vd1);
-		expect(vd1.vaultShares.toString()).toBe('0');
+		expect(vd1.vaultShares.toString()).to.equal('0');
 
 		vd2 = await user2Client.program.account.vaultDepositor.fetch(
 			user2VaultDepositor
 		);
 		// console.log('vd2', vd2);
-		expect(vd2.vaultShares.toString()).toBe('200000000000');
+		expect(vd2.vaultShares.toString()).to.equal('200000000000');
 
 		await user2Client.syncVaultUsers();
 		vaultEquity = await user2Client.calculateVaultEquity({
 			address: commonVaultKey,
 		});
 		// console.log('vault equity', vaultEquity.toString());
-		expect(vaultEquity.toString()).toBe('113850000000');
+		expect(vaultEquity.toString()).to.equal('113850000000');
 	});
 });

@@ -10,7 +10,7 @@ import { VaultClient, VaultDepositor, Vault } from '../../ts/sdk';
 import { BankrunContextWrapper } from './bankrunConnection';
 
 export async function getUserStatsDecoded(
-	driftClient: TestClient,
+	velocityClient: TestClient,
 	bankrunContextWrapper: BankrunContextWrapper,
 	userStatsKey: PublicKey
 ): Promise<AccountInfo<UserStatsAccount>> {
@@ -18,7 +18,7 @@ export async function getUserStatsDecoded(
 		userStatsKey
 	);
 	const userStatsBefore: UserStatsAccount = (
-		driftClient.program as any
+		velocityClient.program as any
 	).account.userStats.coder.accounts.decode('userStats', accountInfo!.data);
 
 	// @ts-ignore
@@ -28,7 +28,7 @@ export async function getUserStatsDecoded(
 }
 
 export async function overWriteUserStats(
-	driftClient: TestClient,
+	velocityClient: TestClient,
 	bankrunContextWrapper: BankrunContextWrapper,
 	userStatsKey: PublicKey,
 	userStats: AccountInfo<UserStatsAccount>
@@ -38,7 +38,7 @@ export async function overWriteUserStats(
 		owner: userStats.owner,
 		lamports: userStats.lamports,
 		data: await (
-			driftClient.program as any
+			velocityClient.program as any
 		).account.userStats.coder.accounts.encode('userStats', userStats.data),
 		rentEpoch: userStats.rentEpoch,
 	});
@@ -116,7 +116,7 @@ export async function overWriteVault(
 }
 
 export async function getUserDecoded(
-	driftClient: TestClient,
+	velocityClient: TestClient,
 	bankrunContextWrapper: BankrunContextWrapper,
 	userKey: PublicKey
 ): Promise<AccountInfo<UserAccount>> {
@@ -124,7 +124,7 @@ export async function getUserDecoded(
 		userKey
 	);
 	const user: UserAccount = (
-		driftClient.program as any
+		velocityClient.program as any
 	).account.user.coder.accounts.decodeUnchecked('user', accountInfo!.data);
 
 	// @ts-ignore
@@ -134,7 +134,7 @@ export async function getUserDecoded(
 }
 
 export async function overWriteUser(
-	driftClient: TestClient,
+	velocityClient: TestClient,
 	bankrunContextWrapper: BankrunContextWrapper,
 	userKey: PublicKey,
 	user: AccountInfo<UserAccount>
@@ -143,7 +143,7 @@ export async function overWriteUser(
 		executable: user.executable,
 		owner: user.owner,
 		lamports: user.lamports,
-		data: await (driftClient.program as any).account.user.coder.accounts.encode(
+		data: await (velocityClient.program as any).account.user.coder.accounts.encode(
 			'user',
 			user.data
 		),

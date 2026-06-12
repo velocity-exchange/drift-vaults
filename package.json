@@ -6,34 +6,34 @@
 		"lint": "eslint . --ext ts --quiet",
 		"lint:fix": "eslint . --ext ts --fix",
 		"prepare": "husky install",
-		"update-types": "cp target/types/drift_vaults.ts ts/sdk/src/types/drift_vaults.ts && prettier --write ts/sdk/src/types/drift_vaults.ts",
-		"update-idl": "cp target/idl/drift_vaults.json ts/sdk/src/idl/drift_vaults.json",
+		"program:sync-idl": "cp target/idl/velocity_vaults.json ts/sdk/src/idl/velocity_vaults.json && cp target/types/velocity_vaults.ts ts/sdk/src/types/velocity_vaults.ts && prettier --write ts/sdk/src/types/velocity_vaults.ts",
+		"program:build": "anchor build --ignore-keys -- --features anchor-test && bun run program:sync-idl",
 		"update-pyth": "cp tests/fixtures/pyth.json target/idl/pyth.json",
-		"update-drift": "cp tests/fixtures/drift.json target/idl/drift.json",
-		"anchor-tests": "yarn update-types && yarn update-idl && yarn update-drift && yarn update-pyth && yarn update-drift && yarn update-pyth && yarn run jest --runInBand --forceExit"
+		"update-velocity": "cp tests/fixtures/velocity.json target/idl/velocity.json",
+		"anchor-tests": "bash ./test-scripts/run-anchor-tests.sh"
 	},
 	"devDependencies": {
 		"@coral-xyz/anchor": "npm:@anchor-lang/core@1.0.1",
 		"@solana/web3.js": "1.73.2",
-		"@velocity-exchange/sdk": "0.0.3",
+		"@velocity-exchange/sdk": "0.1.0",
 		"@types/bn.js": "5.1.0",
-		"@types/jest": "29.5.14",
-		"@types/jest-expect-message": "1.1.0",
+		"@types/chai": "4.3.20",
+		"@types/mocha": "10.0.10",
 		"@typescript-eslint/eslint-plugin": "4.28.0",
 		"@typescript-eslint/parser": "4.28.0",
 		"anchor-bankrun": "0.3.0",
+		"chai": "4.4.1",
 		"eslint": "7.29.0",
 		"eslint-config-prettier": "8.3.0",
 		"eslint-plugin-prettier": "3.4.0",
 		"husky": "8.0.0",
-		"jest": "29.7.0",
-		"jest-expect-message": "1.1.3",
+		"mocha": "11.7.5",
 		"prettier": "2.6.2",
 		"rpc-websockets": "7.5.1",
 		"solana-bankrun": "0.3.0",
 		"spl-token-bankrun": "0.2.6",
-		"ts-jest": "29.2.5",
-		"ts-node": "7.0.1",
+		"ts-mocha": "11.1.0",
+		"ts-node": "10.9.2",
 		"typescript": "5.6.2"
 	},
 	"engines": {
@@ -43,8 +43,8 @@
 		"@metaplex-foundation/js": "0.20.1"
 	},
 	"resolutions": {
-		"@drift-labs/sdk": "npm:@velocity-exchange/sdk@0.0.3",
-		"@velocity-exchange/sdk": "0.0.3",
+		"@velocity-exchange/sdk": "0.1.0",
 		"@coral-xyz/anchor": "npm:@anchor-lang/core@1.0.1"
-	}
+	},
+	"packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

@@ -15,7 +15,7 @@ ENV                 | --env             | 'devnet' or 'mainnet' (default: 'mainn
 
 View available commands, run with `--help` in nested commands to get available options for each command
 ```
-yarn cli --help
+bun run cli --help
 ```
 
 ## Manager Commands
@@ -26,7 +26,7 @@ The following commands are menat to be run by Vault Managers. `KEYPAIR_PATH` sho
 
 Init a new vault. This will initialize a new vault and update you (the manager) as the delegate, unless `--delegate` is specified.
 ```
-$ yarn cli init-vault --help
+$ bun run cli init-vault --help
 Usage: cli init-vault [options]
 
 Initialize a new vault
@@ -49,7 +49,7 @@ Options:
 
 To update params in a vault:
 ```
-$ yarn cli manager-update-vault --help
+$ bun run cli manager-update-vault --help
 Usage: cli manager-update-vault [options]
 
 Update vault params for a manager
@@ -69,32 +69,32 @@ Options:
 
 If you wish to trade with spot margin on the vault, you must enable margin trading:
 ```
-yarn cli manager-update-margin-trading-enabled --vault-address=<VAULT_ADDRESS> --enabled=<true|false>
+bun run cli manager-update-margin-trading-enabled --vault-address=<VAULT_ADDRESS> --enabled=<true|false>
 ```
 
 ### Manager Deposit
 
 Make a deposit into a vault as the manager (`DEPOSIT_AMOUNT` in human precision, e.g. 5 for 5 USDC):
 ```
-yarn cli manager-deposit --vault-address=<VAULT_ADDRESS> --amount=<DEPOSIT_AMOUNT>
+bun run cli manager-deposit --vault-address=<VAULT_ADDRESS> --amount=<DEPOSIT_AMOUNT>
 ```
 
 ### Manager Withdraw
 
 Make a withdraw request from a vault as the manager (`SHARES` in raw precision):
 ```
-yarn cli manager-request-withdraw --vault-address=<VAULT_ADDRESS> --amount=<SHARES>
+bun run cli manager-request-withdraw --vault-address=<VAULT_ADDRESS> --amount=<SHARES>
 ```
 
 After the redeem period has passed, the manager can complete the withdraw:
 ```
-yarn cli manager-withdraw --vault-address=<VAULT_ADDRESS>
+bun run cli manager-withdraw --vault-address=<VAULT_ADDRESS>
 ```
 
 ### Apply Profit Share
 Manager can trigger a profit share calculation (this looks up all `VaultDepositors` for a vault eligible for profit share and batch processes them):
 ```
-yarn cli apply-profit-share-all --vault-address=<VAULT_ADDRESS>
+bun run cli apply-profit-share-all --vault-address=<VAULT_ADDRESS>
 ```
 
 ## Depositor Commands
@@ -108,7 +108,7 @@ Permissioned vaults require the __manager__ to initialize the `VaultDepositor` a
 
 Initialize a `VaultDepositor` account for `AUTHORITY_TO_ALLOW_DEPOSIT` to deposit:
 ```
-yarn cli init-vault-depositor --vault-address=<VAULT_ADDRESS> --deposit-authority=<AUTHORITY_TO_ALLOW_DEPOSIT>
+bun run cli init-vault-depositor --vault-address=<VAULT_ADDRESS> --deposit-authority=<AUTHORITY_TO_ALLOW_DEPOSIT>
 ```
 
 
@@ -118,35 +118,35 @@ Permissionless vaults allow anyone to deposit. The `deposit` instruction will in
 `DEPOSIT_AMOUNT` in human precision of the deposit token (e.g. 5 for 5 USDC).
 
 ```
-yarn cli deposit --vault-address=<VAULT_ADDRESS> --deposit-authority=<DEPOSIT_AUTHORITY> --amount=<DEPOSIT_AMOUNT>
+bun run cli deposit --vault-address=<VAULT_ADDRESS> --deposit-authority=<DEPOSIT_AUTHORITY> --amount=<DEPOSIT_AMOUNT>
 ```
 
 Alternatively, you can pass in the `VaultDepositor` address directly:
 ```
-yarn cli deposit --vault-depositor-address=<VAULT_DEPOSITOR_ADDRESS> --amount=<DEPOSIT_AMOUNT>
+bun run cli deposit --vault-depositor-address=<VAULT_DEPOSITOR_ADDRESS> --amount=<DEPOSIT_AMOUNT>
 ```
 
 ### Withdraw from a vault
 
 Request a withdraw from a vault:
 ```
-yarn cli request-withdraw --vault-address=<VAULT_ADDRESS> --authority=<AUTHORITY> --amount=<WITHDRAW_AMOUNT>
+bun run cli request-withdraw --vault-address=<VAULT_ADDRESS> --authority=<AUTHORITY> --amount=<WITHDRAW_AMOUNT>
 ```
 
 After the redeem period has passed, the depositor can complete the withdraw:
 ```
-yarn cli withdraw --vault-address=<VAULT_ADDRESS> --authority=<AUTHORITY>
+bun run cli withdraw --vault-address=<VAULT_ADDRESS> --authority=<AUTHORITY>
 ```
 
 ## View only commands
 
 To print out the current state of a `Vault`:
 ```
-yarn cli view-vault --vault-address=<VAULT_ADDRESS>
+bun run cli view-vault --vault-address=<VAULT_ADDRESS>
 ```
 
 To print out the current state of a `VaultDepositor`:
 ```
-yarn cli view-vault-depositor --vault-depositor-address=<VAULT_DEPOSITOR_ADDRESS>
+bun run cli view-vault-depositor --vault-depositor-address=<VAULT_DEPOSITOR_ADDRESS>
 ```
 

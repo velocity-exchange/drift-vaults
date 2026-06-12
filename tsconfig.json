@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "types": ["node", "jest"],
+    "types": ["node", "mocha"],
     "typeRoots": [
       "./node_modules/@types"
     ],
@@ -11,6 +11,5 @@
     "target": "es6",
     "esModuleInterop": true,
     "resolveJsonModule": true
-  },
-  "files": ["node_modules/jest-expect-message/types/index.d.ts"]
+  }
 }

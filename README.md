@@ -1,4 +1,4 @@
-# Drift Vaults
+# Velocity Vaults
 
 soon^TM
 
@@ -42,15 +42,9 @@ export PATH="/opt/homebrew/opt/gnu-tar/libexec/gnubin:$PATH"
 ## Run tests
 
 ```shell
-yarn && cd ts/sdk && yarn && yarn build && cd ..
-
-# can be any valid key
-ANCHOR_WALLET=~/.config/solana/id.json && anchor test
-```
-
-For ease-of-use you can run the following script to build and test instead:
-
-```shell
 chmod +x ./test.sh
-./test.sh
+./test.sh             # build + test
+./test.sh --no-build  # reuse last build
 ```
+
+No separate validator needed — the test script manages its own.

@@ -1,6 +1,6 @@
+import { expect } from 'chai';
 import * as anchor from '@coral-xyz/anchor';
 import { BN, Program, Wallet } from '@coral-xyz/anchor';
-import { describe, it } from '@jest/globals';
 import {
 	BankrunContextWrapper,
 	TEST_ADMIN_KEYPAIR,
@@ -11,7 +11,7 @@ import {
 	getVaultAddressSync,
 	getVaultDepositorAddressSync,
 	encodeName,
-	DriftVaults,
+	VelocityVaults,
 	VAULT_PROGRAM_ID,
 	IDL,
 	FeeUpdateStatus,
@@ -19,8 +19,8 @@ import {
 } from '../ts/sdk/lib';
 import {
 	BulkAccountLoader,
-	DRIFT_PROGRAM_ID,
-	DriftClient,
+	VELOCITY_PROGRAM_ID,
+	VelocityClient,
 	getVariant,
 	OracleSource,
 	PEG_PRECISION,
@@ -32,6 +32,7 @@ import {
 } from '@velocity-exchange/sdk';
 import { TestBulkAccountLoader } from './common/testBulkAccountLoader';
 import {
+	assert,
 	bootstrapSignerClientAndUserBankrun,
 	initializeQuoteSpotMarket,
 	initializeSolSpotMarket,
@@ -56,9 +57,9 @@ const ONE_DAY_S = new BN(86400);
 const ONE_WEEK_S = ONE_DAY_S.muln(7);
 
 describe('feeUpdate', () => {
-	let vaultProgram: Program<DriftVaults>;
+	let vaultProgram: Program<VelocityVaults>;
 	const initialSolPerpPrice = 100;
-	let adminDriftClient: TestClient;
+	let adminVelocityClient: TestClient;
 	let bulkAccountLoader: TestBulkAccountLoader;
 	let bankrunContextWrapper: BankrunContextWrapper;
 	let usdcMint: PublicKey;
@@ -72,28 +73,28 @@ describe('feeUpdate', () => {
 
 	const managerSigner = Keypair.generate();
 	let managerClient: VaultClient;
-	let managerDriftClient: DriftClient;
+	let managerVelocityClient: VelocityClient;
 
 	let adminClient: VaultClient;
 
 	const user1Signer = Keypair.generate();
 	let user1Client: VaultClient;
-	let user1DriftClient: DriftClient;
+	let user1VelocityClient: VelocityClient;
 
 	const user2Signer = Keypair.generate();
 	let user2Client: VaultClient;
-	let user2DriftClient: DriftClient;
+	let user2VelocityClient: VelocityClient;
 
 	const user3Signer = Keypair.generate();
 	let user3Client: VaultClient;
-	let user3DriftClient: DriftClient;
+	let user3VelocityClient: VelocityClient;
 
 	beforeEach(async () => {
 		const context = await startAnchor(
 			'',
 			[
 				{
-					name: 'drift',
+					name: 'velocity',
 					programId: new PublicKey(
 						'vELoC1audYbSYVRXn1vPaV8Axoa9oU6BYmNGZZBDZ1P'
 					),
@@ -105,7 +106,7 @@ describe('feeUpdate', () => {
 		// wrap the context to use it with the test helpers
 		bankrunContextWrapper = new BankrunContextWrapper(context);
 
-		vaultProgram = new Program<DriftVaults>(
+		vaultProgram = new Program<VelocityVaults>(
 			IDL,
 			bankrunContextWrapper.provider
 		);
@@ -133,10 +134,10 @@ describe('feeUpdate', () => {
 			100 * LAMPORTS_PER_SOL
 		);
 
-		adminDriftClient = new TestClient({
+		adminVelocityClient = new TestClient({
 			connection: bankrunContextWrapper.connection.toConnection(),
 			wallet: adminWallet,
-			programID: new PublicKey(DRIFT_PROGRAM_ID),
+			programID: new PublicKey(VELOCITY_PROGRAM_ID),
 			opts: {
 				commitment: 'confirmed',
 			},
@@ -151,13 +152,13 @@ describe('feeUpdate', () => {
 			},
 		});
 
-		await adminDriftClient.initialize(usdcMint, true);
-		await adminDriftClient.subscribe();
+		await adminVelocityClient.initialize(usdcMint, true);
+		await adminVelocityClient.subscribe();
 
-		await initializeQuoteSpotMarket(adminDriftClient, usdcMint);
-		await initializeSolSpotMarket(adminDriftClient, solPerpOracle);
+		await initializeQuoteSpotMarket(adminVelocityClient, usdcMint);
+		await initializeSolSpotMarket(adminVelocityClient, solPerpOracle);
 
-		await adminDriftClient.initializePerpMarket(
+		await adminVelocityClient.initializePerpMarket(
 			0,
 			solPerpOracle,
 			ammInitialBaseAssetReserve,
@@ -167,7 +168,7 @@ describe('feeUpdate', () => {
 			OracleSource.PYTH
 		);
 
-		await adminDriftClient.fetchAccounts();
+		await adminVelocityClient.fetchAccounts();
 
 		const managerBootstrap = await bootstrapSignerClientAndUserBankrun({
 			bankrunContext: bankrunContextWrapper,
@@ -176,7 +177,7 @@ describe('feeUpdate', () => {
 			usdcMint: usdcMint,
 			usdcAmount,
 			vaultClientCliMode: true,
-			driftClientConfig: {
+			velocityClientConfig: {
 				accountSubscription: {
 					type: 'polling',
 					accountLoader: bulkAccountLoader as BulkAccountLoader,
@@ -189,15 +190,15 @@ describe('feeUpdate', () => {
 			},
 		});
 		managerClient = managerBootstrap.vaultClient;
-		managerDriftClient = managerBootstrap.driftClient;
+		managerVelocityClient = managerBootstrap.velocityClient;
 
 		const provider = new BankrunProvider(
 			bankrunContextWrapper.context,
-			adminDriftClient.wallet as anchor.Wallet
+			adminVelocityClient.wallet as anchor.Wallet
 		);
 		const program = new Program(IDL, provider);
 		adminClient = new VaultClient({
-			driftClient: adminDriftClient,
+			velocityClient: adminVelocityClient,
 			// @ts-ignore
 			program,
 		});
@@ -209,7 +210,7 @@ describe('feeUpdate', () => {
 			usdcMint: usdcMint,
 			usdcAmount,
 			vaultClientCliMode: true,
-			driftClientConfig: {
+			velocityClientConfig: {
 				accountSubscription: {
 					type: 'polling',
 					accountLoader: bulkAccountLoader as BulkAccountLoader,
@@ -222,7 +223,7 @@ describe('feeUpdate', () => {
 			},
 		});
 		user1Client = user1Bootstrap.vaultClient;
-		user1DriftClient = user1Bootstrap.driftClient;
+		user1VelocityClient = user1Bootstrap.velocityClient;
 
 		const user2Bootstrap = await bootstrapSignerClientAndUserBankrun({
 			bankrunContext: bankrunContextWrapper,
@@ -231,7 +232,7 @@ describe('feeUpdate', () => {
 			usdcMint: usdcMint,
 			usdcAmount,
 			vaultClientCliMode: true,
-			driftClientConfig: {
+			velocityClientConfig: {
 				accountSubscription: {
 					type: 'polling',
 					accountLoader: bulkAccountLoader as BulkAccountLoader,
@@ -244,7 +245,7 @@ describe('feeUpdate', () => {
 			},
 		});
 		user2Client = user2Bootstrap.vaultClient;
-		user2DriftClient = user2Bootstrap.driftClient;
+		user2VelocityClient = user2Bootstrap.velocityClient;
 
 		const user3Bootstrap = await bootstrapSignerClientAndUserBankrun({
 			bankrunContext: bankrunContextWrapper,
@@ -253,7 +254,7 @@ describe('feeUpdate', () => {
 			usdcMint: usdcMint,
 			usdcAmount,
 			vaultClientCliMode: true,
-			driftClientConfig: {
+			velocityClientConfig: {
 				accountSubscription: {
 					type: 'polling',
 					accountLoader: bulkAccountLoader as BulkAccountLoader,
@@ -266,7 +267,7 @@ describe('feeUpdate', () => {
 			},
 		});
 		user3Client = user3Bootstrap.vaultClient;
-		user3DriftClient = user3Bootstrap.driftClient;
+		user3VelocityClient = user3Bootstrap.velocityClient;
 
 		// initialize a vault and depositors
 		await managerClient.initializeVault(
@@ -298,21 +299,21 @@ describe('feeUpdate', () => {
 	});
 
 	afterEach(async () => {
-		await adminDriftClient.unsubscribe();
+		await adminVelocityClient.unsubscribe();
 		await adminClient.unsubscribe();
 		await managerClient.unsubscribe();
-		await managerDriftClient.unsubscribe();
+		await managerVelocityClient.unsubscribe();
 		await user1Client.unsubscribe();
-		await user1DriftClient.unsubscribe();
+		await user1VelocityClient.unsubscribe();
 		await user2Client.unsubscribe();
-		await user2DriftClient.unsubscribe();
+		await user2VelocityClient.unsubscribe();
 		await user3Client.unsubscribe();
-		await user3DriftClient.unsubscribe();
+		await user3VelocityClient.unsubscribe();
 	});
 
 	it('vaults initialized', async () => {
 		const vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.manager).toEqual(managerSigner.publicKey);
+		expect(vaultAcct.manager).to.eql(managerSigner.publicKey);
 
 		const vaultDepositor = getVaultDepositorAddressSync(
 			vaultProgram.programId,
@@ -322,7 +323,7 @@ describe('feeUpdate', () => {
 		const vdAcct = await vaultProgram.account.vaultDepositor.fetch(
 			vaultDepositor
 		);
-		expect(vdAcct.vault).toEqual(commonVaultKey);
+		expect(vdAcct.vault).to.eql(commonVaultKey);
 
 		const vaultDepositor2 = getVaultDepositorAddressSync(
 			vaultProgram.programId,
@@ -332,12 +333,12 @@ describe('feeUpdate', () => {
 		const vdAcct2 = await vaultProgram.account.vaultDepositor.fetch(
 			vaultDepositor2
 		);
-		expect(vdAcct2.vault).toEqual(commonVaultKey);
+		expect(vdAcct2.vault).to.eql(commonVaultKey);
 	});
 
 	it('only admin can init fee update account', async () => {
 		let vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.feeUpdateStatus).toEqual(FeeUpdateStatus.None);
+		expect(vaultAcct.feeUpdateStatus).to.eql(FeeUpdateStatus.None);
 
 		const feeUpdate = getFeeUpdateAddressSync(
 			vaultProgram.programId,
@@ -345,34 +346,34 @@ describe('feeUpdate', () => {
 		);
 		expect(
 			await bankrunContextWrapper.connection.getAccountInfo(feeUpdate)
-		).toBeNull();
+		).to.equal(null);
 
 		// manager cannot init their own FeeUpdate account
 		try {
 			await managerClient.adminInitFeeUpdate(commonVaultKey, { noLut: true });
-			fail('should not get here');
+			assert(false, 'should not get here');
 		} catch (e) {
-			expect(e).toBeDefined();
+			expect(e).to.not.equal(undefined);
 		}
 
 		// admin can init the FeeUpdate account
 		await adminClient.adminInitFeeUpdate(commonVaultKey, { noLut: true });
 
 		vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.feeUpdateStatus).toEqual(FeeUpdateStatus.None);
+		expect(vaultAcct.feeUpdateStatus).to.eql(FeeUpdateStatus.None);
 
 		expect(
 			await bankrunContextWrapper.connection.getAccountInfo(feeUpdate)
-		).not.toBeNull();
+		).to.not.equal(null);
 	});
 
 	it('manager can lower fee from normal update', async () => {
 		let vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.managementFee.toNumber()).toEqual(
+		expect(vaultAcct.managementFee.toNumber()).to.eql(
 			TWENTY_PCT_FEE.toNumber()
 		);
-		expect(vaultAcct.profitShare).toEqual(TWENTY_PCT_FEE.toNumber());
-		expect(vaultAcct.hurdleRate).toEqual(TEN_PCT_FEE.toNumber());
+		expect(vaultAcct.profitShare).to.eql(TWENTY_PCT_FEE.toNumber());
+		expect(vaultAcct.hurdleRate).to.eql(TEN_PCT_FEE.toNumber());
 
 		await managerClient.managerUpdateVault(
 			commonVaultKey,
@@ -389,18 +390,18 @@ describe('feeUpdate', () => {
 		);
 
 		vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.managementFee.toNumber()).toEqual(TEN_PCT_FEE.toNumber());
-		expect(vaultAcct.profitShare).toEqual(TEN_PCT_FEE.toNumber());
-		expect(vaultAcct.hurdleRate).toEqual(TWENTY_PCT_FEE.toNumber());
+		expect(vaultAcct.managementFee.toNumber()).to.eql(TEN_PCT_FEE.toNumber());
+		expect(vaultAcct.profitShare).to.eql(TEN_PCT_FEE.toNumber());
+		expect(vaultAcct.hurdleRate).to.eql(TWENTY_PCT_FEE.toNumber());
 	});
 
 	it('manager cannot raise fee from normal update', async () => {
 		let vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.managementFee.toNumber()).toEqual(
+		expect(vaultAcct.managementFee.toNumber()).to.eql(
 			TWENTY_PCT_FEE.toNumber()
 		);
-		expect(vaultAcct.profitShare).toEqual(TWENTY_PCT_FEE.toNumber());
-		expect(vaultAcct.hurdleRate).toEqual(TEN_PCT_FEE.toNumber());
+		expect(vaultAcct.profitShare).to.eql(TWENTY_PCT_FEE.toNumber());
+		expect(vaultAcct.hurdleRate).to.eql(TEN_PCT_FEE.toNumber());
 
 		try {
 			await managerClient.managerUpdateVault(
@@ -416,26 +417,26 @@ describe('feeUpdate', () => {
 				},
 				{ noLut: true }
 			);
-			fail('should not get here');
+			assert(false, 'should not get here');
 		} catch (e) {
-			expect(e).toBeDefined();
+			expect(e).to.not.equal(undefined);
 		}
 
 		vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.managementFee.toNumber()).toEqual(
+		expect(vaultAcct.managementFee.toNumber()).to.eql(
 			TWENTY_PCT_FEE.toNumber()
 		);
-		expect(vaultAcct.profitShare).toEqual(TWENTY_PCT_FEE.toNumber());
-		expect(vaultAcct.hurdleRate).toEqual(TEN_PCT_FEE.toNumber());
+		expect(vaultAcct.profitShare).to.eql(TWENTY_PCT_FEE.toNumber());
+		expect(vaultAcct.hurdleRate).to.eql(TEN_PCT_FEE.toNumber());
 	});
 
 	it('manager must choose timelock duration greater than 2x redeem period and 1 week', async () => {
 		const vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.managementFee.toNumber()).toEqual(
+		expect(vaultAcct.managementFee.toNumber()).to.eql(
 			TWENTY_PCT_FEE.toNumber()
 		);
-		expect(vaultAcct.profitShare).toEqual(TWENTY_PCT_FEE.toNumber());
-		expect(vaultAcct.hurdleRate).toEqual(TEN_PCT_FEE.toNumber());
+		expect(vaultAcct.profitShare).to.eql(TWENTY_PCT_FEE.toNumber());
+		expect(vaultAcct.hurdleRate).to.eql(TEN_PCT_FEE.toNumber());
 
 		const timelockDuration = ONE_WEEK_S.divn(2);
 
@@ -450,19 +451,19 @@ describe('feeUpdate', () => {
 				},
 				{ noLut: true }
 			);
-			fail('should not get here');
+			assert(false, 'should not get here');
 		} catch (e) {
-			expect(e).toBeDefined();
+			expect(e).to.not.equal(undefined);
 		}
 	});
 
 	it('manager can raise fee through timelock', async () => {
 		let vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.managementFee.toNumber()).toEqual(
+		expect(vaultAcct.managementFee.toNumber()).to.eql(
 			TWENTY_PCT_FEE.toNumber()
 		);
-		expect(vaultAcct.profitShare).toEqual(TWENTY_PCT_FEE.toNumber());
-		expect(vaultAcct.hurdleRate).toEqual(TEN_PCT_FEE.toNumber());
+		expect(vaultAcct.profitShare).to.eql(TWENTY_PCT_FEE.toNumber());
+		expect(vaultAcct.hurdleRate).to.eql(TEN_PCT_FEE.toNumber());
 
 		const timelockDuration = ONE_WEEK_S;
 
@@ -486,21 +487,21 @@ describe('feeUpdate', () => {
 			vaultProgram
 		);
 
-		expect(events.length).toEqual(1);
-		expect(getVariant(events[0].data.action)).toEqual('pending');
+		expect(events.length).to.eql(1);
+		expect(getVariant(events[0].data.action)).to.eql('pending');
 		const ts = events[0].data.ts;
 		const timeLockEndTs = events[0].data.timelockEndTs;
-		expect(timeLockEndTs.sub(ts).toNumber()).toEqual(
+		expect(timeLockEndTs.sub(ts).toNumber()).to.eql(
 			timelockDuration.toNumber()
 		);
 
 		vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.managementFee.toNumber()).toEqual(
+		expect(vaultAcct.managementFee.toNumber()).to.eql(
 			TWENTY_PCT_FEE.toNumber()
 		);
-		expect(vaultAcct.profitShare).toEqual(TWENTY_PCT_FEE.toNumber());
-		expect(vaultAcct.hurdleRate).toEqual(TEN_PCT_FEE.toNumber());
-		expect(vaultAcct.feeUpdateStatus).toEqual(FeeUpdateStatus.PendingFeeUpdate);
+		expect(vaultAcct.profitShare).to.eql(TWENTY_PCT_FEE.toNumber());
+		expect(vaultAcct.hurdleRate).to.eql(TEN_PCT_FEE.toNumber());
+		expect(vaultAcct.feeUpdateStatus).to.eql(FeeUpdateStatus.PendingFeeUpdate);
 
 		// user deposits after 1 day, new fee should come into effect
 		await bankrunContextWrapper.moveTimeForward(ONE_WEEK_S.toNumber());
@@ -524,14 +525,14 @@ describe('feeUpdate', () => {
 			vaultProgram
 		);
 		const feeUpdateEvent = events1.find((e) => e.name === 'feeUpdateRecord');
-		expect(feeUpdateEvent).not.toBeNull();
-		expect(getVariant(feeUpdateEvent?.data.action)).toEqual('applied');
+		expect(feeUpdateEvent).to.not.equal(null);
+		expect(getVariant(feeUpdateEvent?.data.action)).to.eql('applied');
 
 		vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.managementFee.toNumber()).toEqual(TEN_PCT_FEE.toNumber());
-		expect(vaultAcct.profitShare).toEqual(TEN_PCT_FEE.toNumber());
-		expect(vaultAcct.hurdleRate).toEqual(TWENTY_PCT_FEE.toNumber());
-		expect(vaultAcct.feeUpdateStatus).toEqual(FeeUpdateStatus.None);
+		expect(vaultAcct.managementFee.toNumber()).to.eql(TEN_PCT_FEE.toNumber());
+		expect(vaultAcct.profitShare).to.eql(TEN_PCT_FEE.toNumber());
+		expect(vaultAcct.hurdleRate).to.eql(TWENTY_PCT_FEE.toNumber());
+		expect(vaultAcct.feeUpdateStatus).to.eql(FeeUpdateStatus.None);
 	});
 
 	it('manager can cancel fee updates', async () => {
@@ -552,12 +553,12 @@ describe('feeUpdate', () => {
 		);
 
 		vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.feeUpdateStatus).toEqual(FeeUpdateStatus.PendingFeeUpdate);
+		expect(vaultAcct.feeUpdateStatus).to.eql(FeeUpdateStatus.PendingFeeUpdate);
 
 		await managerClient.managerCancelFeeUpdate(commonVaultKey, { noLut: true });
 
 		vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.feeUpdateStatus).toEqual(FeeUpdateStatus.None);
+		expect(vaultAcct.feeUpdateStatus).to.eql(FeeUpdateStatus.None);
 	});
 
 	it('admin can delete fee update account', async () => {
@@ -566,6 +567,6 @@ describe('feeUpdate', () => {
 
 		await adminClient.adminDeleteFeeUpdate(commonVaultKey, { noLut: true });
 		vaultAcct = await vaultProgram.account.vault.fetch(commonVaultKey);
-		expect(vaultAcct.feeUpdateStatus).toEqual(FeeUpdateStatus.None);
+		expect(vaultAcct.feeUpdateStatus).to.eql(FeeUpdateStatus.None);
 	});
 });

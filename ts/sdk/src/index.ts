@@ -7,5 +7,5 @@ export * from './utils';
 export * from './types/types';
 export * from './constants';
 export * from './parsers';
-export * from './types/drift_vaults';
+export * from './types/velocity_vaults';
 export * from './math';

@@ -3,7 +3,8 @@ module.exports = {
 	"parser": "@typescript-eslint/parser",
 	"env": {
 		"browser": true,
-		"node": true
+		"node": true,
+		"mocha": true
 	},
 	"ignorePatterns": ["**/lib", "**/node_modules", "migrations"],
 	"plugins": [],
@@ -36,7 +37,7 @@ module.exports = {
 					{
 						// Restrict importing BN from bn.js
 						"group": ["bn.js"],
-						"message": "Import BN from @drift-labs/sdk instead",
+						"message": "Import BN from @velocity-exchange/sdk instead",
 					}
 				],
 			},
