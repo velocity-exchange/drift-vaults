@@ -1,0 +1,25 @@
+{
+	"$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+	"bootstrap-sha": "a2208c6b2bbaaee85e11dbf7bfd7baead02f2cfc",
+	"release-type": "node",
+	"include-v-in-tag": true,
+	"pull-request-title-pattern": "chore: release ${version}",
+	"changelog-sections": [
+		{ "type": "feat", "section": "Features" },
+		{ "type": "fix", "section": "Bug Fixes" },
+		{ "type": "perf", "section": "Performance" },
+		{ "type": "revert", "section": "Reverts" },
+		{ "type": "refactor", "section": "Refactors", "hidden": false },
+		{ "type": "docs", "section": "Documentation", "hidden": true },
+		{ "type": "test", "section": "Tests", "hidden": true },
+		{ "type": "build", "section": "Build", "hidden": true },
+		{ "type": "ci", "section": "CI", "hidden": true },
+		{ "type": "chore", "section": "Chores", "hidden": true }
+	],
+	"packages": {
+		"ts/sdk": {
+			"package-name": "@velocity-exchange/vaults-sdk",
+			"changelog-path": "CHANGELOG.md"
+		}
+	}
+}

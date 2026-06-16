@@ -1,0 +1,69 @@
+name: release-please
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # 1. release-please: parses Conventional Commits since the last release tag.
+  #
+  #    On every push to master it either opens / updates a "release PR" (which
+  #    bumps the version, regenerates the CHANGELOG, and updates the manifest)
+  #    or, if the most recent push was the merge of a release PR, creates the
+  #    Git tag + GitHub Release and exports `ts/sdk--release_created` which
+  #    gates the publish job below.
+  # ---------------------------------------------------------------------------
+  release-please:
+    runs-on: ubicloud
+    outputs:
+      sdk_released: ${{ steps.release.outputs['ts/sdk--release_created'] }}
+      sdk_tag: ${{ steps.release.outputs['ts/sdk--tag_name'] }}
+      sdk_version: ${{ steps.release.outputs['ts/sdk--version'] }}
+    steps:
+      # Mint an App installation token so the release PR is authored by the
+      # App (not github-actions[bot]). Without this, GitHub suppresses
+      # workflow runs on the release PR — required-check gates can never pass.
+      - name: Mint App token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+      - uses: googleapis/release-please-action@a02a34c4d625f9be7cb89156071d8567266a2445 # v4
+        id: release
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  # ---------------------------------------------------------------------------
+  # 2. Publish @velocity-exchange/vaults-sdk (node).
+  #    Runs only when release-please cut a tag for the `ts/sdk` component.
+  # ---------------------------------------------------------------------------
+  publish-sdk:
+    needs: release-please
+    if: needs.release-please.outputs.sdk_released == 'true'
+    runs-on: ubicloud
+    permissions:
+      contents: read
+      id-token: write # required for npm trusted publishing (OIDC token exchange)
+    defaults:
+      run:
+        working-directory: ./ts/sdk
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ needs.release-please.outputs.sdk_tag }}
+      - uses: ./.github/actions/npm-publish-setup
+        with:
+          working-directory: ./ts/sdk
+      - name: Publish node build to npm
+        # OIDC trusted publishing — --provenance is implicit, no NPM_TOKEN.
+        run: npm publish --access=public
