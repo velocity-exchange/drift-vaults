@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use drift::cpi::accounts::UpdateUser;
 use drift::instructions::optional_accounts::AccountMaps;
-use drift::program::Drift;
+use drift::program::Velocity;
 use drift::state::user::User;
 
 use crate::constants::admin;
@@ -99,7 +99,7 @@ pub struct Liquidate<'info> {
     )]
     /// CHECK: checked in drift cpi
     pub drift_user: AccountLoader<'info, User>,
-    pub drift_program: Program<'info, Drift>,
+    pub drift_program: Program<'info, Velocity>,
 }
 
 impl<'info> UpdateUserDelegateCPI for Context<'info, Liquidate<'info>> {

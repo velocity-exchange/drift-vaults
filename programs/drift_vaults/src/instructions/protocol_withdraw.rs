@@ -3,7 +3,7 @@ use anchor_spl::token::{self, Transfer};
 use anchor_spl::token::{Token, TokenAccount};
 use drift::cpi::accounts::Withdraw as DriftWithdraw;
 use drift::instructions::optional_accounts::AccountMaps;
-use drift::program::Drift;
+use drift::program::Velocity;
 use drift::state::user::{User, UserStats};
 
 use crate::constraints::{
@@ -97,7 +97,7 @@ pub struct ProtocolWithdraw<'info> {
         token::mint = vault_token_account.mint
     )]
     pub user_token_account: Box<Account<'info, TokenAccount>>,
-    pub drift_program: Program<'info, Drift>,
+    pub drift_program: Program<'info, Velocity>,
     pub token_program: Program<'info, Token>,
 }
 
@@ -116,7 +116,7 @@ impl<'info> WithdrawCPI for Context<'info, ProtocolWithdraw<'info>> {
                 .drift_spot_market_vault
                 .to_account_info()
                 .clone(),
-            drift_signer: self.accounts.drift_signer.to_account_info().clone(),
+            velocity_signer: self.accounts.drift_signer.to_account_info().clone(),
             user_token_account: self.accounts.vault_token_account.to_account_info().clone(),
             token_program: self.accounts.token_program.to_account_info().clone(),
         };

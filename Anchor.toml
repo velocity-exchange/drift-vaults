@@ -2,7 +2,7 @@
 anchor_version = "1.0.0"
 
 [programs.localnet]
-drift_vaults = "vAuLTsyrvSfZRuRB3XgvkPwNGgYSs9YRYymVebLKoxR"
+drift_vaults = "Cst3DCweLdBkpj51crsfZPzxGcTSXXwYdhJaEQw9TnEL"
 drift = "vELoC1audYbSYVRXn1vPaV8Axoa9oU6BYmNGZZBDZ1P"
 pyth = "gSbePebfvPy7tRqimPoVecS2UsBvYv46ynrzWocc92s"
 

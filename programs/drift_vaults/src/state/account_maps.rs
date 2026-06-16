@@ -1,5 +1,5 @@
 use anchor_lang::prelude::Context;
-use drift::error::DriftResult;
+use drift::error::VelocityResult;
 use drift::instructions::optional_accounts::{load_maps, AccountMaps};
 use drift::state::spot_market_map::get_writable_spot_market_set;
 use std::collections::BTreeSet;
@@ -15,7 +15,7 @@ pub trait AccountMapProvider<'a> {
         writable_spot_market: Option<u16>,
         has_vault_protocol: bool,
         has_fee_update: bool,
-    ) -> DriftResult<AccountMaps<'a>>;
+    ) -> VelocityResult<AccountMaps<'a>>;
 }
 
 impl<'info, T: anchor_lang::Bumps> AccountMapProvider<'info> for Context<'info, T> {
@@ -25,7 +25,7 @@ impl<'info, T: anchor_lang::Bumps> AccountMapProvider<'info> for Context<'info, 
         writable_spot_market_index: Option<u16>,
         has_vault_protocol: bool,
         has_fee_update: bool,
-    ) -> DriftResult<AccountMaps<'info>> {
+    ) -> VelocityResult<AccountMaps<'info>> {
         // if [`VaultProtocol`] exists it will be the last index in the remaining_accounts, so we need to skip it.
         let mut end_index = self.remaining_accounts.len() - (has_vault_protocol as usize);
         // if there is a [`FeeUpdate`], we need to skip one more account

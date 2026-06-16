@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 use drift::cpi::accounts::InitializeInsuranceFundStake as DriftInitializeInsuranceFundStake;
-use drift::program::Drift;
+use drift::program::Velocity;
 use drift::state::spot_market::SpotMarket;
 
 use crate::constraints::{is_manager_for_vault, is_user_stats_for_vault};
@@ -64,7 +64,7 @@ pub struct InitializeInsuranceFundStake<'info> {
     pub drift_user_stats: AccountInfo<'info>,
     /// CHECK: checked in drift cpi
     pub drift_state: AccountInfo<'info>,
-    pub drift_program: Program<'info, Drift>,
+    pub drift_program: Program<'info, Velocity>,
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }

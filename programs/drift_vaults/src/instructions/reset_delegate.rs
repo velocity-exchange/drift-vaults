@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use drift::cpi::accounts::UpdateUser;
-use drift::program::Drift;
+use drift::program::Velocity;
 use drift::state::user::User;
 
 use crate::constraints::is_user_for_vault;
@@ -45,7 +45,7 @@ pub struct ResetDelegate<'info> {
     )]
     /// CHECK: checked in drift cpi
     pub drift_user: AccountLoader<'info, User>,
-    pub drift_program: Program<'info, Drift>,
+    pub drift_program: Program<'info, Velocity>,
 }
 
 impl<'info> UpdateUserDelegateCPI for Context<'info, ResetDelegate<'info>> {

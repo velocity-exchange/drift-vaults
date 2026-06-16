@@ -9,28 +9,46 @@ on:
 defaults:
   run:
     shell: bash
-    working-directory: .
+    working-directory: ./drift-vaults
 
 env:
   CARGO_TERM_COLOR: always
-  RUST_TOOLCHAIN: 1.70.0
-  SOLANA_VERSION: "1.16.27"
+  RUST_TOOLCHAIN: 1.91.1
+  SOLANA_VERSION: 2.3.11
+  ANCHOR_VERSION: 1.0.0
+  NODE_VERSION: '24.x.x'
+  # During the Anchor 1.0 migration the `drift` crate and `@drift-labs/sdk`
+  # are consumed as a path/link dep on protocol-v2-shadow checked out as a
+  # sibling. SHADOW_REF pins which shadow commit CI builds against.
+  SHADOW_REF: master
 
 jobs:
   fmt-clippy:
     name: fmt & clippy
     runs-on: ubicloud
     steps:
-      - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2
-      - name: Install Rust nightly
-        uses: actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af # v1
+      - name: Checkout drift-vaults
+        uses: actions/checkout@v4
+        with:
+          path: drift-vaults
+      - name: Checkout protocol-v2-shadow
+        uses: actions/checkout@v4
+        with:
+          repository: drift-labs/protocol-v2-shadow
+          ref: ${{ env.SHADOW_REF }}
+          token: ${{ secrets.GH_PAT }}
+          path: protocol-v2-shadow
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ env.RUST_TOOLCHAIN }}
           profile: minimal
           override: true
           components: rustfmt, clippy
       - name: Cache build files
-        uses: Swatinem/rust-cache@81d053bdb0871dcd3f10763c8cc60d0adc41762b # v1
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: drift-vaults
       - name: Cargo fmt
         run: cargo fmt -- --check
       - name: Cargo clippy
@@ -39,125 +57,172 @@ jobs:
     name: Unit tests
     runs-on: ubicloud
     steps:
-      - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2
+      - name: Checkout drift-vaults
+        uses: actions/checkout@v4
+        with:
+          path: drift-vaults
+      - name: Checkout protocol-v2-shadow
+        uses: actions/checkout@v4
+        with:
+          repository: drift-labs/protocol-v2-shadow
+          ref: ${{ env.SHADOW_REF }}
+          token: ${{ secrets.GH_PAT }}
+          path: protocol-v2-shadow
       - name: Install Rust toolchain
-        uses: actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af # v1
+        uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ env.RUST_TOOLCHAIN }}
           profile: minimal
           override: true
       - name: Cache build artefacts
-        uses: Swatinem/rust-cache@81d053bdb0871dcd3f10763c8cc60d0adc41762b # v1
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: drift-vaults
       - name: Run package checks
-        run: cargo check # run package checks
+        run: cargo check
       - name: Run unit tests
-        run: cargo test --lib # run unit tests
+        run: cargo test --lib
   yarn-prettier:
     runs-on: ubicloud
     steps:
-      - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2
-      - name: Setup node
-        uses: actions/setup-node@7c12f8017d5436eb855f1ed4399f037a36fbd9e8 # v2
+      - name: Checkout drift-vaults
+        uses: actions/checkout@v4
         with:
-          node-version: '24.x.x'
-          registry-url: "https://registry.npmjs.org"
+          path: drift-vaults
+      - name: Checkout protocol-v2-shadow
+        uses: actions/checkout@v4
+        with:
+          repository: drift-labs/protocol-v2-shadow
+          ref: ${{ env.SHADOW_REF }}
+          token: ${{ secrets.GH_PAT }}
+          path: protocol-v2-shadow
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: 'https://registry.npmjs.org'
       - name: Install yarn
-        run: yarn
+        run: yarn install --ignore-scripts
       - name: Run prettier
         run: yarn prettify
   yarn-lint:
     runs-on: ubicloud
     steps:
-      - uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2
-      - name: Setup node
-        uses: actions/setup-node@7c12f8017d5436eb855f1ed4399f037a36fbd9e8 # v2
+      - name: Checkout drift-vaults
+        uses: actions/checkout@v4
         with:
-          node-version: '24.x.x'
-          registry-url: "https://registry.npmjs.org"
+          path: drift-vaults
+      - name: Checkout protocol-v2-shadow
+        uses: actions/checkout@v4
+        with:
+          repository: drift-labs/protocol-v2-shadow
+          ref: ${{ env.SHADOW_REF }}
+          token: ${{ secrets.GH_PAT }}
+          path: protocol-v2-shadow
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: 'https://registry.npmjs.org'
       - name: Install yarn
-        run: yarn
+        run: yarn install --ignore-scripts
       - name: Run lint
         run: yarn lint
   anchor-tests:
     runs-on: ubicloud
     timeout-minutes: 60
     steps:
-      - name: Checkout main
-        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+      - name: Checkout drift-vaults
+        uses: actions/checkout@v4
+        with:
+          path: drift-vaults
+
+      - name: Checkout protocol-v2-shadow
+        uses: actions/checkout@v4
+        with:
+          repository: drift-labs/protocol-v2-shadow
+          ref: ${{ env.SHADOW_REF }}
+          token: ${{ secrets.GH_PAT }}
+          path: protocol-v2-shadow
 
       - name: Install Rust toolchain
-        uses: actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af # v1
+        uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ env.RUST_TOOLCHAIN }}
           profile: minimal
           override: true
       - name: Cache build artefacts
-        uses: Swatinem/rust-cache@81d053bdb0871dcd3f10763c8cc60d0adc41762b # v1
+        uses: Swatinem/rust-cache@v2
         with:
-          cache-on-failure: "true"
+          workspaces: drift-vaults
+          cache-on-failure: 'true'
 
-      - uses: ./.github/actions/setup-solana/
+      - uses: ./drift-vaults/.github/actions/setup-solana/
 
       - name: Cache Anchor CLI
         id: cache-anchor
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@v4
         with:
-          path: ~/.cargo/bin/anchor
-          key: ${{ runner.os }}-anchor-cli-0.29.0
+          path: ~/.avm
+          key: ${{ runner.os }}-anchor-cli-${{ env.ANCHOR_VERSION }}
 
       - name: Install Anchor CLI
         if: steps.cache-anchor.outputs.cache-hit != 'true'
-        run: cargo install --git https://github.com/coral-xyz/anchor --tag v0.29.0 anchor-cli --locked
+        run: |
+          sudo apt update -y && sudo apt install -y libudev-dev
+          cargo install --git https://github.com/coral-xyz/anchor avm --force
+          avm install ${{ env.ANCHOR_VERSION }}
+          avm use ${{ env.ANCHOR_VERSION }}
 
       - name: Setup node
-        uses: actions/setup-node@7c12f8017d5436eb855f1ed4399f037a36fbd9e8 # v2
+        uses: actions/setup-node@v4
         with:
-          node-version: '24.x.x'
-          registry-url: "https://registry.npmjs.org"
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Setup yarn
         run: npm install -g yarn
 
-      - name: Install yarn
-        run: yarn
+      - name: Build shadow drift SDK
+        run: yarn install && yarn build
+        working-directory: ./protocol-v2-shadow/sdk
 
-      - name: install typescript
-        run: npm install typescript -g
+      - name: Install drift-vaults deps
+        run: yarn install
 
-      - name: build sdk
-        run: |
-          yarn
-          tsc
-        working-directory: ts/sdk
+      - name: Build drift-vaults SDK
+        run: yarn install && yarn build
+        working-directory: ./drift-vaults/ts/sdk
 
-      - name: run anchor tests
+      - name: Anchor build
+        run: anchor build --ignore-keys -- --features anchor-test
+
+      - name: Run anchor tests
         env:
           RUST_LOG: solana_runtime::message_processor::stable_log=info
-        run: anchor test -- --features anchor-test
+        run: ./test.sh --no-build
+  # Verified build is disabled until the `drift` crate is consumed from a
+  # published source rather than a local path dep on protocol-v2-shadow.
+  # solana-verify build vendors crates, which doesn't work with a path dep
+  # outside the cargo workspace.
   verified-build:
     name: Build Verifiable Artifact
+    if: ${{ false }}
     runs-on: ubicloud
     steps:
       - name: Checkout
-        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+        uses: actions/checkout@v4
 
       - name: Install Solana Verify
         run: |
-          cargo install --locked --version 0.2.11 solana-verify
-          solana-verify --version
+          sudo apt update -y && sudo apt install -y libudev-dev
+          cargo install --locked --version 0.4.11 solana-verify
 
       - name: Verifiable Build
-        run: |
-          cargo vendor
-          mkdir -p .cargo
-          echo '[source.crates-io]' > .cargo/config.toml
-          echo 'replace-with = "vendored-sources"' >> .cargo/config.toml
-          echo '[source.vendored-sources]' >> .cargo/config.toml
-          echo 'directory = "vendor"' >> .cargo/config.toml
-          solana-verify build --library-name drift_vaults --base-image ellipsislabs/solana:1.16.6
+        run: solana-verify build --library-name drift_vaults -b solanafoundation/solana-verifiable-build:v${{ env.SOLANA_VERSION }}
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@v4
         with:
           name: build
           path: target/deploy/drift_vaults.so

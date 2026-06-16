@@ -17,7 +17,7 @@ mod test_utils;
 mod tests;
 mod token_cpi;
 
-declare_id!("vAuLTsyrvSfZRuRB3XgvkPwNGgYSs9YRYymVebLKoxR");
+declare_id!("Cst3DCweLdBkpj51crsfZPzxGcTSXXwYdhJaEQw9TnEL");
 
 #[program]
 pub mod drift_vaults {

@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount, Transfer};
 use drift::cpi::accounts::Deposit as DriftDeposit;
 use drift::instructions::optional_accounts::AccountMaps;
-use drift::program::Drift;
+use drift::program::Velocity;
 use drift::state::user::{User, UserStats};
 
 use crate::constraints::{
@@ -130,7 +130,7 @@ pub struct Deposit<'info> {
         token::mint = vault_token_account.mint
     )]
     pub user_token_account: Box<Account<'info, TokenAccount>>,
-    pub drift_program: Program<'info, Drift>,
+    pub drift_program: Program<'info, Velocity>,
     pub token_program: Program<'info, Token>,
 }
 

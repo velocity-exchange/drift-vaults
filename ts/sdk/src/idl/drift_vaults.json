@@ -1,5 +1,5 @@
 {
-	"address": "vAuLTsyrvSfZRuRB3XgvkPwNGgYSs9YRYymVebLKoxR",
+	"address": "Cst3DCweLdBkpj51crsfZPzxGcTSXXwYdhJaEQw9TnEL",
 	"metadata": {
 		"name": "drift_vaults",
 		"version": "0.11.0",
@@ -3356,7 +3356,7 @@
 							"If set, the order limit price is the oracle price + this offset",
 							"precision: PRICE_PRECISION"
 						],
-						"type": "i32"
+						"type": "i64"
 					},
 					{
 						"name": "order_id",
@@ -3477,7 +3477,7 @@
 					{
 						"name": "padding",
 						"type": {
-							"array": ["u8", 1]
+							"array": ["u8", 5]
 						}
 					}
 				]
@@ -4865,9 +4865,14 @@
 						"type": "u64"
 					},
 					{
+						"name": "delegate_permissions",
+						"docs": ["Delegate permissions across all sub accounts"],
+						"type": "u8"
+					},
+					{
 						"name": "padding",
 						"type": {
-							"array": ["u8", 40]
+							"array": ["u8", 39]
 						}
 					}
 				]

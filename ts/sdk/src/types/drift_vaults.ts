@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/drift_vaults.json`.
  */
 export type DriftVaults = {
-	address: 'vAuLTsyrvSfZRuRB3XgvkPwNGgYSs9YRYymVebLKoxR';
+	address: 'Cst3DCweLdBkpj51crsfZPzxGcTSXXwYdhJaEQw9TnEL';
 	metadata: {
 		name: 'driftVaults';
 		version: '0.11.0';
@@ -3878,7 +3878,7 @@ export type DriftVaults = {
 							'If set, the order limit price is the oracle price + this offset',
 							'precision: PRICE_PRECISION'
 						];
-						type: 'i32';
+						type: 'i64';
 					},
 					{
 						name: 'orderId';
@@ -3997,7 +3997,7 @@ export type DriftVaults = {
 					{
 						name: 'padding';
 						type: {
-							array: ['u8', 1];
+							array: ['u8', 5];
 						};
 					}
 				];
@@ -5378,9 +5378,14 @@ export type DriftVaults = {
 						type: 'u64';
 					},
 					{
+						name: 'delegatePermissions';
+						docs: ['Delegate permissions across all sub accounts'];
+						type: 'u8';
+					},
+					{
 						name: 'padding';
 						type: {
-							array: ['u8', 40];
+							array: ['u8', 39];
 						};
 					}
 				];

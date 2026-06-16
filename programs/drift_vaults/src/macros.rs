@@ -81,7 +81,7 @@ macro_rules! implement_withdraw {
                 .drift_spot_market_vault
                 .to_account_info()
                 .clone(),
-            drift_signer: $self.accounts.drift_signer.to_account_info().clone(),
+            velocity_signer: $self.accounts.drift_signer.to_account_info().clone(),
             user_token_account: $self.accounts.vault_token_account.to_account_info().clone(),
             token_program: $self.accounts.token_program.to_account_info().clone(),
         };

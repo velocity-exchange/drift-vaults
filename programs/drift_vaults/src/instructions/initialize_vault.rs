@@ -6,7 +6,7 @@ use anchor_spl::token::{Mint, Token, TokenAccount};
 use drift::cpi::accounts::{InitializeUser, InitializeUserStats};
 use drift::math::casting::Cast;
 use drift::math::constants::PERCENTAGE_PRECISION_U64;
-use drift::program::Drift;
+use drift::program::Velocity;
 use drift::state::spot_market::SpotMarket;
 
 pub fn initialize_vault<'info>(
@@ -116,7 +116,7 @@ pub struct InitializeVault<'info> {
     pub payer: Signer<'info>,
     pub rent: Sysvar<'info, Rent>,
     pub system_program: Program<'info, System>,
-    pub drift_program: Program<'info, Drift>,
+    pub drift_program: Program<'info, Velocity>,
     pub token_program: Program<'info, Token>,
 }
 

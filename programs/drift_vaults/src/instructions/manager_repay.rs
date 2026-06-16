@@ -11,7 +11,7 @@ use anchor_spl::token::{Token, TokenAccount};
 use drift::cpi::accounts::Deposit as DriftDeposit;
 use drift::instructions::optional_accounts::AccountMaps;
 use drift::math::safe_math::SafeMath;
-use drift::program::Drift;
+use drift::program::Velocity;
 use drift::state::user::{User, UserStats};
 
 pub fn manager_repay<'info>(
@@ -166,7 +166,7 @@ pub struct ManagerRepay<'info> {
         token::mint = vault_token_account.mint
     )]
     pub user_token_account: Box<Account<'info, TokenAccount>>,
-    pub drift_program: Program<'info, Drift>,
+    pub drift_program: Program<'info, Velocity>,
     pub token_program: Program<'info, Token>,
 }
 

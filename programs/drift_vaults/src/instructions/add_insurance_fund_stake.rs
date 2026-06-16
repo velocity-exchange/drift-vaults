@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount, Transfer};
 use drift::cpi::accounts::AddInsuranceFundStake as DriftAddInsuranceFundStake;
-use drift::program::Drift;
+use drift::program::Velocity;
 use drift::state::insurance_fund_stake::InsuranceFundStake;
 use drift::state::spot_market::SpotMarket;
 
@@ -83,7 +83,7 @@ pub struct AddInsuranceFundStake<'info> {
     pub drift_state: AccountInfo<'info>,
     /// CHECK: forced drift_signer
     pub drift_signer: AccountInfo<'info>,
-    pub drift_program: Program<'info, Drift>,
+    pub drift_program: Program<'info, Velocity>,
     pub token_program: Program<'info, Token>,
 }
 
@@ -133,7 +133,7 @@ impl<'info> AddInsuranceFundStakeCPI for Context<'info, AddInsuranceFundStake<'i
                 .to_account_info()
                 .clone(),
             token_program: self.accounts.token_program.to_account_info().clone(),
-            drift_signer: self.accounts.drift_signer.clone(),
+            velocity_signer: self.accounts.drift_signer.clone(),
         };
 
         let drift_program = self.accounts.drift_program.key();

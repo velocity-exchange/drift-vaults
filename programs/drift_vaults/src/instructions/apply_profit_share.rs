@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use drift::instructions::optional_accounts::AccountMaps;
-use drift::program::Drift;
+use drift::program::Velocity;
 use drift::state::user::{User, UserStats};
 
 use crate::constraints::{
@@ -98,5 +98,5 @@ pub struct ApplyProfitShare<'info> {
     pub drift_state: AccountInfo<'info>,
     /// CHECK: checked in drift cpi
     pub drift_signer: AccountInfo<'info>,
-    pub drift_program: Program<'info, Drift>,
+    pub drift_program: Program<'info, Velocity>,
 }

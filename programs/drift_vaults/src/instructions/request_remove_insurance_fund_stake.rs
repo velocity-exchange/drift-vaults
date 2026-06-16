@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::TokenAccount;
 use drift::cpi::accounts::RequestRemoveInsuranceFundStake as DriftRequestRemoveInsuranceFundStake;
-use drift::program::Drift;
+use drift::program::Velocity;
 use drift::state::insurance_fund_stake::InsuranceFundStake;
 use drift::state::spot_market::SpotMarket;
 
@@ -55,7 +55,7 @@ pub struct RequestRemoveInsuranceFundStake<'info> {
     )]
     /// CHECK: checked in drift cpi
     pub drift_user_stats: AccountInfo<'info>,
-    pub drift_program: Program<'info, Drift>,
+    pub drift_program: Program<'info, Velocity>,
 }
 
 impl<'info> RequestRemoveInsuranceFundStakeCPI
