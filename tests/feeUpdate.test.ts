@@ -63,7 +63,7 @@ describe('feeUpdate', () => {
 	let bankrunContextWrapper: BankrunContextWrapper;
 	let usdcMint: PublicKey;
 	let solPerpOracle: PublicKey;
-	const vaultName = 'fuel distribution vault';
+	const vaultName = 'share accounting vault';
 	const commonVaultKey = getVaultAddressSync(
 		VAULT_PROGRAM_ID,
 		encodeName(vaultName)

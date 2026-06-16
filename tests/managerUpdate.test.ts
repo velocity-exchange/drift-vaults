@@ -44,7 +44,7 @@ describe('driftVaults', () => {
 	let bankrunContextWrapper: BankrunContextWrapper;
 	let usdcMint: PublicKey;
 
-	const vaultName = 'fuel distribution vault';
+	const vaultName = 'share accounting vault';
 	const commonVaultKey = getVaultAddressSync(
 		VAULT_PROGRAM_ID,
 		encodeName(vaultName)

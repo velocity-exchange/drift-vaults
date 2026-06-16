@@ -69,7 +69,7 @@ This is a Solana Anchor program (`drift_vaults`, program id `vAuLTsyrvSfZRuRB3Xg
 - `lib.rs` — thin dispatch layer. Every instruction is one function forwarding into `instructions::*`. Start here to find the surface.
 - `instructions/` — one file per instruction. Constraint macros live in `constraints.rs`.
 - `state/` — account definitions. The heavy logic lives in these, not the instructions:
-  - `vault.rs` (~58KB) and `vault_depositor.rs` (~82KB) are the core share-accounting engines (deposits, withdraws, profit share, rebase, fuel distribution). Most behavior changes touch these.
+  - `vault.rs` (~58KB) and `vault_depositor.rs` (~82KB) are the core share-accounting engines (deposits, withdraws, profit share, rebase). Most behavior changes touch these.
   - `tokenized_vault_depositor.rs` — SPL-token-wrapped depositor position (see `tokenize_shares` / `redeem_tokens` instructions).
   - `vault_protocol.rs` — optional protocol-fee side of a vault (initialized via `initialize_vault_with_protocol`).
   - `fee_update.rs`, `withdraw_request.rs`, `withdraw_unit.rs`, `events.rs`, `traits.rs`, `math.rs`, `account_maps.rs` — supporting types.
@@ -94,7 +94,7 @@ Withdrawals are two-phase: `request_withdraw` → wait `redeem_period` → `with
 
 ### Tests (`tests/`)
 
-Jest integration tests run against `anchor localnet` (started by `test.sh`). `tests/fixtures/` contains the drift + pyth + metaplex programs and accounts loaded into genesis (see `Anchor.toml`). `driftVaults.ts` is the broad end-to-end suite; other files target narrower features (fuel distribution, fee updates, tokenized shares, trusted vaults, etc.).
+Jest integration tests run against `anchor localnet` (started by `test.sh`). `tests/fixtures/` contains the drift + pyth + metaplex programs and accounts loaded into genesis (see `Anchor.toml`). `driftVaults.ts` is the broad end-to-end suite; other files target narrower features (fee updates, tokenized shares, trusted vaults, etc.).
 
 ## Gotchas
 

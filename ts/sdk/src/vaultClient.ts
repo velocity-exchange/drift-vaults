@@ -136,7 +136,6 @@ export class VaultClient {
 		vaultAccount: Vault,
 		_userStats: UserStatsAccount,
 		skipVaultProtocol = false,
-		_skipFuelOverflow = false,
 		skipFeeUpdate = false
 	) {
 		const remainingAccounts = this.driftClient.getRemainingAccounts({
@@ -951,7 +950,6 @@ export class VaultClient {
 			vaultAccount,
 			userStats,
 			false,
-			true,
 			true
 		);
 
@@ -1036,7 +1034,6 @@ export class VaultClient {
 			vaultAccount,
 			userStats,
 			false,
-			true,
 			true
 		);
 
@@ -1095,7 +1092,6 @@ export class VaultClient {
 			vaultAccount,
 			userStats,
 			false,
-			true,
 			true
 		);
 
@@ -1131,7 +1127,6 @@ export class VaultClient {
 			[vaultAccount.spotMarketIndex],
 			vaultAccount,
 			userStats,
-			false,
 			false,
 			false
 		);
@@ -1266,7 +1261,6 @@ export class VaultClient {
 			[borrowSpotMarketIndex, vaultAccount.spotMarketIndex],
 			vaultAccount,
 			userStats,
-			false,
 			false,
 			false
 		);
@@ -1448,7 +1442,6 @@ export class VaultClient {
 			vaultAccount,
 			userStats,
 			false,
-			false,
 			false
 		);
 
@@ -1501,7 +1494,6 @@ export class VaultClient {
 			[],
 			vaultAccount,
 			userStats,
-			false,
 			false,
 			false
 		);
@@ -1616,7 +1608,6 @@ export class VaultClient {
 			vaultAccount,
 			userStats,
 			false,
-			false,
 			false
 		);
 
@@ -1675,7 +1666,6 @@ export class VaultClient {
 			vaultAccount,
 			userStats,
 			false,
-			true,
 			true
 		);
 
@@ -1738,7 +1728,6 @@ export class VaultClient {
 			vaultAccount,
 			userStats,
 			false,
-			true,
 			true
 		);
 
@@ -1958,7 +1947,6 @@ export class VaultClient {
 			vaultAccount,
 			userStats,
 			false,
-			true,
 			true
 		);
 
@@ -2031,7 +2019,6 @@ export class VaultClient {
 			vaultAccount,
 			userStats,
 			false,
-			true,
 			true
 		);
 
@@ -2113,7 +2100,6 @@ export class VaultClient {
 			vaultAccount,
 			userStats,
 			false,
-			true,
 			true
 		);
 
@@ -2191,7 +2177,6 @@ export class VaultClient {
 			[vaultAccount.spotMarketIndex],
 			vaultAccount,
 			userStats,
-			false,
 			false,
 			false
 		);
@@ -2370,7 +2355,6 @@ export class VaultClient {
 			vaultAccount,
 			userStats,
 			false,
-			false,
 			false
 		);
 
@@ -2438,7 +2422,6 @@ export class VaultClient {
 			[vaultAccount.spotMarketIndex],
 			vaultAccount,
 			userStats,
-			false,
 			false,
 			false
 		);
@@ -2563,7 +2546,6 @@ export class VaultClient {
 			vaultAccount,
 			userStats,
 			false,
-			false,
 			false
 		);
 		if (vaultAccount.vaultProtocol) {
@@ -2677,7 +2659,6 @@ export class VaultClient {
 			vaultAccount,
 			userStats,
 			false,
-			false,
 			false
 		);
 
@@ -2747,7 +2728,6 @@ export class VaultClient {
 			vaultAccount,
 			userStats,
 			false,
-			true,
 			true
 		);
 
@@ -3225,7 +3205,6 @@ export class VaultClient {
 			vaultAccount,
 			userStats,
 			false,
-			true,
 			true
 		);
 
@@ -3295,7 +3274,6 @@ export class VaultClient {
 			vaultAccount,
 			userStats,
 			false,
-			true,
 			true
 		);
 
@@ -3352,7 +3330,6 @@ export class VaultClient {
 			vaultAccount,
 			userStats,
 			false,
-			true,
 			true
 		);
 
