@@ -1,8 +1,11 @@
 {
 	"name": "@velocity-exchange/vaults-sdk",
-	"version": "0.11.1",
+	"version": "0.0.3",
 	"main": "lib/index.js",
 	"types": "lib/index.d.ts",
+	"files": [
+		"lib"
+	],
 	"directories": {
 		"lib": "lib"
 	},
@@ -35,7 +38,7 @@
 	"scripts": {
 		"cli": "ts-node cli/cli.ts",
 		"clean": "rm -rf lib",
-		"build": "yarn clean && tsc"
+		"build": "bun run clean && tsc"
 	},
 	"resolutions": {
 		"@types/bn.js": "5.1.6",
