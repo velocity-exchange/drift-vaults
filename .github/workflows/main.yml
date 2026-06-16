@@ -15,6 +15,10 @@ env:
   CARGO_TERM_COLOR: always
   RUST_TOOLCHAIN: 1.91.1
   SOLANA_VERSION: 2.3.11
+  # The SBF program build needs platform-tools >= v1.52 (rustc 1.89) to parse the
+  # edition2024 crates pulled in transitively via the velocity (shadow) dep + Anchor 1.0.
+  # agave 2.3.11 ships v1.48 (rustc 1.84) which can't; its bytecode runtime stays the target.
+  SBF_SOLANA_VERSION: 3.1.9
   ANCHOR_VERSION: 1.0.0
   NODE_VERSION: '24.x.x'
   # During the Anchor 1.0 migration the `drift` crate and `@drift-labs/sdk`
@@ -195,7 +199,13 @@ jobs:
         working-directory: ./drift-vaults/ts/sdk
 
       - name: Anchor build
-        run: anchor build --ignore-keys -- --features anchor-test
+        # Build the .so with the 3.1.x cargo-build-sbf (platform-tools v1.52) so edition2024
+        # crates parse; re-init keeps 2.3.11 as the active runtime/validator. Mirrors build.sh.
+        run: |
+          agave-install init ${{ env.SBF_SOLANA_VERSION }}
+          agave-install init ${{ env.SOLANA_VERSION }}
+          SBF_BIN="$HOME/.local/share/solana/install/releases/${{ env.SBF_SOLANA_VERSION }}/solana-release/bin"
+          PATH="$SBF_BIN:$PATH" anchor build --ignore-keys -- --features anchor-test
 
       - name: Run anchor tests
         env:

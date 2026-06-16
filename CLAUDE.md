@@ -8,14 +8,23 @@ Pinned versions (strict — the build/test scripts enforce them):
 
 - anchor `1.0.0` (via `avm use 1.0.0`)
 - rust `1.91.1` (on Apple Silicon, `rustup override set 1.91.1-x86_64-apple-darwin` — the x86 toolchain is required)
-- solana/agave `2.3.11`
+- solana/agave `2.3.11` — the **runtime/validator** target. The **SBF program build** uses solana `3.1.9` (platform-tools v1.52 / rustc 1.89): agave 2.3.11 ships platform-tools v1.48 (rustc 1.84) which can't parse the `edition2024` crates pulled in transitively via the velocity (shadow) dep + Anchor 1.0. `build.sh` builds the `.so` with the 3.1.x `cargo-build-sbf` (set via `SBF_SOLANA_VERSION`) while keeping 2.3.11 active for the validator; the bytecode is compatible across both.
 - node `>=24`
 
 `rust-toolchain.toml` and `build.sh` pin these; don't upgrade casually.
 
 ### Anchor 1.0 migration status
 
-The codebase has been migrated from Anchor 0.29 to 1.0. During migration the `drift` crate is consumed as a **local path dep** at `../protocol-v2-shadow/programs/drift` (see `programs/drift_vaults/Cargo.toml`). `drift.so` / `pyth.so` fixtures under `tests/fixtures/` were rebuilt from that same shadow repo — they MUST be regenerated from shadow whenever you pull shadow changes, or the local validator tests will fail on deserialization. The `@drift-labs/sdk` TS dep is similarly pinned to `link:../../../protocol-v2-shadow/sdk` in `ts/sdk/package.json`. Once shadow publishes matching crates.io / npm releases, these can be flipped back.
+The codebase has been migrated from Anchor 0.29 to 1.0. During migration the drift program crate is consumed as a **local path dep** at `../protocol-v2-shadow/programs/velocity` (see `programs/drift_vaults/Cargo.toml`). Shadow renamed this crate `drift` → `velocity`; we keep the local dep alias `drift = { package = "velocity", ... }` so existing `drift::` paths resolve. `tests/fixtures/drift.so` is the **velocity program** loaded at genesis (Anchor.toml address `vELoC1…`) — it MUST be regenerated from shadow whenever you pull shadow changes, or the local validator tests will fail on deserialization. Rebuild it with the 3.1.x SBF toolchain:
+
+```
+cd ../protocol-v2-shadow
+"$HOME/.local/share/solana/install/releases/3.1.9/solana-release/bin/cargo-build-sbf" \
+  --manifest-path programs/velocity/Cargo.toml --no-default-features --features no-entrypoint,anchor-test
+cp target/deploy/velocity.so ../drift-vaults/tests/fixtures/drift.so
+```
+
+(The sibling `pyth.json` / `drift.json` files are vestigial — not referenced by `Anchor.toml` or the tests.) The `@drift-labs/sdk` TS dep is similarly pinned to the published `@velocity-exchange/sdk` in `ts/sdk/package.json`. Once shadow publishes matching crates.io / npm releases, these can be flipped back.
 
 **Zero-copy struct layout invariants** (enforced by `drift_macros::assert_no_slop` + `static_assertions::const_assert_eq`): every account struct's content (excluding the 8-byte discriminator) must be a multiple of 16 bytes, and all `u128`/`i128` fields must begin at 16-aligned offsets. Rust ≥ 1.77 made `align_of::<u128>() == 16` on x86_64 but SBF stayed at 8 — violating the invariant causes sizeof-divergence between host tests and on-chain bytes. If you add a field to `Vault` / `VaultDepositor` / `TokenizedVaultDepositor` / `VaultProtocol` / `FeeUpdate`, keep all u128/i128 fields grouped near the top (before any `WithdrawRequest` or sub-struct that embeds a u128) and adjust the trailing `padding` array so `(SIZE - 8) % 16 == 0`. The `assert_no_slop` attribute will fail compilation immediately if you get it wrong. See shadow's `docs/alignment-and-native-offsets.md` for the full rationale.
 

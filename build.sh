@@ -34,14 +34,25 @@ agave-install init 2.3.11 || solana-install init 2.3.11
 
 avm use 1.0.0
 
+# The SBF program build needs platform-tools >= v1.52 (rustc 1.89) to parse the
+# edition2024 crates pulled in transitively via the velocity (shadow) dep + Anchor 1.0.
+# agave 2.3.11 ships platform-tools v1.48 (rustc 1.84) which can't. Build the .so with
+# the 3.1.x cargo-build-sbf; its bytecode stays compatible with the 2.3.11 runtime/validator.
+SBF_SOLANA_VERSION=3.1.9
+SBF_BIN="$HOME/.local/share/solana/install/releases/${SBF_SOLANA_VERSION}/solana-release/bin"
+if [[ ! -x "$SBF_BIN/cargo-build-sbf" ]]; then
+    echo "Installing solana ${SBF_SOLANA_VERSION} for the SBF build toolchain..."
+    agave-install init "$SBF_SOLANA_VERSION" && agave-install init 2.3.11
+fi
+
 cargo build || exit 1
 
 if [[ "$anchor_test" == true ]]; then
     echo "Building with anchor-test"
-    anchor build --ignore-keys -- --features anchor-test || exit 1
+    PATH="$SBF_BIN:$PATH" anchor build --ignore-keys -- --features anchor-test || exit 1
 else
     echo "Building without anchor-test"
-    anchor build --ignore-keys || exit 1
+    PATH="$SBF_BIN:$PATH" anchor build --ignore-keys || exit 1
 fi
 
 cargo fmt || exit 1
