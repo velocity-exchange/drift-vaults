@@ -2,7 +2,7 @@
 
 soon^TM
 
-[did you see the CLI?](./ts/sdk/README.md) and the [wiki?](https://github.com/drift-labs/drift-vaults/wiki)
+[did you see the CLI?](./ts/sdk/README.md) and the [wiki?](https://github.com/velocity-exchange/drift-vaults/wiki)
 
 # Development
 
