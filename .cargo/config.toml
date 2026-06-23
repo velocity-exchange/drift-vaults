@@ -1,28 +1,28 @@
 [source.crates-io]
 replace-with = "vendored-sources"
 
-[source."git+https://github.com/drift-labs/drift-macros.git?rev=c57d87"]
-git = "https://github.com/drift-labs/drift-macros.git"
+[source."git+https://github.com/velocity-exchange/drift-macros.git?rev=c57d87"]
+git = "https://github.com/velocity-exchange/drift-macros.git"
 rev = "c57d87"
 replace-with = "vendored-sources"
 
-[source."git+https://github.com/drift-labs/phoenix-v1?rev=7703c5"]
-git = "https://github.com/drift-labs/phoenix-v1"
+[source."git+https://github.com/velocity-exchange/phoenix-v1?rev=7703c5"]
+git = "https://github.com/velocity-exchange/phoenix-v1"
 rev = "7703c5"
 replace-with = "vendored-sources"
 
-[source."git+https://github.com/drift-labs/protocol-v2.git?rev=v2.120.0"]
-git = "https://github.com/drift-labs/protocol-v2.git"
+[source."git+https://github.com/velocity-exchange/protocol-v2.git?rev=v2.120.0"]
+git = "https://github.com/velocity-exchange/protocol-v2.git"
 rev = "v2.120.0"
 replace-with = "vendored-sources"
 
-[source."git+https://github.com/drift-labs/pyth-crosschain?rev=3e8a24ecd0bcf22b787313e2020f4186bb22c729"]
-git = "https://github.com/drift-labs/pyth-crosschain"
+[source."git+https://github.com/velocity-exchange/pyth-crosschain?rev=3e8a24ecd0bcf22b787313e2020f4186bb22c729"]
+git = "https://github.com/velocity-exchange/pyth-crosschain"
 rev = "3e8a24ecd0bcf22b787313e2020f4186bb22c729"
 replace-with = "vendored-sources"
 
-[source."git+https://github.com/drift-labs/pyth-crosschain?rev=d790d1cb4da873a949cf33ff70349b7614b232eb"]
-git = "https://github.com/drift-labs/pyth-crosschain"
+[source."git+https://github.com/velocity-exchange/pyth-crosschain?rev=d790d1cb4da873a949cf33ff70349b7614b232eb"]
+git = "https://github.com/velocity-exchange/pyth-crosschain"
 rev = "d790d1cb4da873a949cf33ff70349b7614b232eb"
 replace-with = "vendored-sources"
 
